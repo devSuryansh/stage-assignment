@@ -1,0 +1,17 @@
+{
+  "name": "Cultural Adaptation Studio",
+  "install": "npm ci",
+  "terminals": [
+    {
+      "name": "dev",
+      "command": "npm run dev",
+      "description": "Next.js dev server on http://localhost:3000. The app runs offline via heuristic extraction/adaptation and Pollinations image fallback; set FreeLLMAPI env vars to use the LLM path."
+    }
+  ],
+  "ports": [
+    {
+      "name": "web",
+      "port": 3000
+    }
+  ]
+}
