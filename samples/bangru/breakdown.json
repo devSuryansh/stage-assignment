@@ -1,0 +1,946 @@
+{
+  "jobId": "d26dc2b4-a854-4f9d-bf61-9b0015386005",
+  "culture": {
+    "dialect": "Bangru",
+    "region": "Haryana",
+    "setting": "rural",
+    "label": "Bangru Haryanvi (Haryana, rural)"
+  },
+  "characters": [
+    {
+      "canonicalId": "char_convict",
+      "names": [
+        "The Convict",
+        "Convict"
+      ],
+      "aliases": [
+        "नया वाला",
+        "613"
+      ],
+      "age": "young adult",
+      "role": "protagonist / new prisoner",
+      "relationships": [
+        "opposed by Havaldar",
+        "judged by Dagdu",
+        "watched by Ganpat"
+      ],
+      "personality": [
+        "withdrawn",
+        "careful",
+        "hiding something"
+      ],
+      "dialect": "neutral (to be adapted)",
+      "physicalDescription": "Young Indian man, head often down, half-healed cut over one eye, face partly obscured",
+      "grooming": "unkempt intake look; later grey jail uniform",
+      "emotionalArc": "silent intake humiliation to barrack exposure",
+      "identityLockPrompt": "same young Indian man always, half-healed cut over one eye, head often lowered, lean build, consistent face across shots",
+      "important": true
+    },
+    {
+      "canonicalId": "char_havaldar",
+      "names": [
+        "Havaldar"
+      ],
+      "aliases": [],
+      "age": "45",
+      "role": "jail guard processing intake",
+      "relationships": [
+        "dominates Convict",
+        "works with Head Clerk"
+      ],
+      "personality": [
+        "unhurried",
+        "contemptuous",
+        "performatively loud"
+      ],
+      "dialect": "neutral",
+      "physicalDescription": "Pot-bellied middle-aged guard, thick fingers",
+      "grooming": "khaki uniform, sweat-stained",
+      "emotionalArc": "bored processor to theatrical bully",
+      "identityLockPrompt": "same pot-bellied 45-year-old Indian havaldar, thick fingers, khaki uniform, consistent face",
+      "important": true
+    },
+    {
+      "canonicalId": "char_head_clerk",
+      "names": [
+        "Head Clerk"
+      ],
+      "aliases": [],
+      "age": "50s",
+      "role": "intake clerk",
+      "relationships": [
+        "works intake counter"
+      ],
+      "personality": [
+        "bored",
+        "bureaucratic"
+      ],
+      "dialect": "neutral",
+      "physicalDescription": "Behind counter with ledger and stamp pad",
+      "grooming": "faded white shirt",
+      "emotionalArc": "flat administrative presence",
+      "identityLockPrompt": "same middle-aged Indian clerk behind counter, faded shirt, ledger ink stains, consistent face",
+      "important": false
+    },
+    {
+      "canonicalId": "char_dagdu",
+      "names": [
+        "Dagdu"
+      ],
+      "aliases": [
+        "दगडू भाई"
+      ],
+      "age": "40s",
+      "role": "barrack king / antagonist power",
+      "relationships": [
+        "commands Trusty",
+        "threatens Convict",
+        "tolerates Ganpat"
+      ],
+      "personality": [
+        "lazy power",
+        "cruel",
+        "theatrical"
+      ],
+      "dialect": "neutral",
+      "physicalDescription": "40s, shirt open, scar like a zip down one forearm, matchstick in teeth",
+      "grooming": "open shirt, raised bedroll with pillow",
+      "emotionalArc": "assesses and marks the Convict as untouchable",
+      "identityLockPrompt": "same 40s Indian inmate boss, zip-like forearm scar, matchstick in teeth, open shirt, consistent face",
+      "important": true
+    },
+    {
+      "canonicalId": "char_ganpat",
+      "names": [
+        "Ganpat"
+      ],
+      "aliases": [
+        "गणपत काका",
+        "Old Man"
+      ],
+      "age": "60s",
+      "role": "elder observer / mercy voice",
+      "relationships": [
+        "watched by room",
+        "speaks to Dagdu carefully"
+      ],
+      "personality": [
+        "spare",
+        "calm",
+        "tired compassion"
+      ],
+      "dialect": "neutral",
+      "physicalDescription": "Spare, white-stubbled old man, cross-legged",
+      "grooming": "simple worn clothes",
+      "emotionalArc": "quiet conscience in the barrack",
+      "identityLockPrompt": "same spare 60s Indian man, white stubble, calm tired eyes, cross-legged, consistent face",
+      "important": true
+    },
+    {
+      "canonicalId": "char_trusty",
+      "names": [
+        "Trusty"
+      ],
+      "aliases": [],
+      "age": "30s",
+      "role": "Dagdu's side man",
+      "relationships": [
+        "serves Dagdu"
+      ],
+      "personality": [
+        "grinning",
+        "messenger of gossip"
+      ],
+      "dialect": "neutral",
+      "physicalDescription": "Inmate beside Dagdu",
+      "grooming": "jail clothes, slightly privileged",
+      "emotionalArc": "announces Convict's crimes to the room",
+      "identityLockPrompt": "same lean Indian trusty inmate beside Dagdu, sly grin, consistent face",
+      "important": false
+    }
+  ],
+  "locations": [
+    {
+      "canonicalId": "loc_jail_gate",
+      "name": "Central Jail Main Gate",
+      "aliases": [
+        "CENTRAL JAIL - MAIN GATE"
+      ],
+      "description": "High bone-coloured wall, broken glass, rusted wire, black iron gate",
+      "architectureCues": "watchtower, government seal, prison bus"
+    },
+    {
+      "canonicalId": "loc_intake",
+      "name": "Jail Intake Room",
+      "aliases": [
+        "JAIL - INTAKE ROOM",
+        "INTAKE / STRIP AREA"
+      ],
+      "description": "Bare room, ceiling fan, long counter, tin partition strip area",
+      "architectureCues": "ledger counter, gunny sack, coarse uniforms"
+    },
+    {
+      "canonicalId": "loc_corridor",
+      "name": "Jail Corridor",
+      "aliases": [
+        "JAIL - CORRIDOR"
+      ],
+      "description": "Long gallery with cell doors and faces at bars",
+      "architectureCues": "barred doors, echo, concrete"
+    },
+    {
+      "canonicalId": "loc_barrack",
+      "name": "Jail Barrack",
+      "aliases": [
+        "JAIL - BARRACK"
+      ],
+      "description": "Long hall, bedrolls, corner latrine, barred window light",
+      "architectureCues": "raised bedroll for boss, tin trunk, heat"
+    }
+  ],
+  "props": [
+    {
+      "canonicalId": "prop_placard_613",
+      "name": "Number placard 613",
+      "aliases": [
+        "placard",
+        "chalk number"
+      ],
+      "description": "Chalked number board slapped on Convict chest",
+      "ownerCharacterId": "char_convict"
+    },
+    {
+      "canonicalId": "prop_collar_lump",
+      "name": "Collar seam lump",
+      "aliases": [
+        "lump",
+        "sewn lump"
+      ],
+      "description": "Small hard lump sewn into shirt collar, secretly transferred",
+      "ownerCharacterId": "char_convict"
+    },
+    {
+      "canonicalId": "prop_matchstick",
+      "name": "Matchstick",
+      "aliases": [],
+      "description": "Dagdu works a matchstick between his teeth",
+      "ownerCharacterId": "char_dagdu"
+    },
+    {
+      "canonicalId": "prop_ledger",
+      "name": "Ledger and stamp pad",
+      "aliases": [
+        "ledger",
+        "stamp"
+      ],
+      "description": "Intake paperwork tools",
+      "ownerCharacterId": "char_head_clerk"
+    }
+  ],
+  "costumes": [
+    {
+      "canonicalId": "cos_convict_civilian",
+      "characterId": "char_convict",
+      "label": "Convict civilian intake clothes",
+      "garments": [
+        "own shirt",
+        "civilian trousers"
+      ],
+      "fabrics": [
+        "worn cotton"
+      ],
+      "colors": [
+        "muted"
+      ],
+      "footwear": "simple sandals or bare",
+      "jewelry": [],
+      "headwear": "none",
+      "grooming": "cut over eye, head down",
+      "sceneNumbers": [
+        1,
+        2
+      ]
+    },
+    {
+      "canonicalId": "cos_convict_uniform",
+      "characterId": "char_convict",
+      "label": "Convict grey jail uniform + 613",
+      "garments": [
+        "coarse grey jail shirt",
+        "grey trousers",
+        "number placard 613"
+      ],
+      "fabrics": [
+        "coarse cotton"
+      ],
+      "colors": [
+        "grey"
+      ],
+      "footwear": "jail chappals",
+      "jewelry": [],
+      "headwear": "none",
+      "grooming": "intake buzz/unkempt",
+      "sceneNumbers": [
+        3,
+        4,
+        5
+      ],
+      "changeReason": "Forced strip and uniform issue at intake"
+    },
+    {
+      "canonicalId": "cos_havaldar_khaki",
+      "characterId": "char_havaldar",
+      "label": "Havaldar khaki duty kit",
+      "garments": [
+        "khaki shirt",
+        "khaki trousers",
+        "belt"
+      ],
+      "fabrics": [
+        "khaki cotton"
+      ],
+      "colors": [
+        "khaki"
+      ],
+      "footwear": "scuffed boots",
+      "jewelry": [],
+      "headwear": "optional police cap",
+      "grooming": "sweaty, pot-bellied",
+      "sceneNumbers": [
+        2,
+        3,
+        4,
+        5
+      ]
+    },
+    {
+      "canonicalId": "cos_dagdu_open_shirt",
+      "characterId": "char_dagdu",
+      "label": "Dagdu open-shirt barrack boss",
+      "garments": [
+        "open shirt",
+        "jail trousers"
+      ],
+      "fabrics": [
+        "worn cotton"
+      ],
+      "colors": [
+        "faded"
+      ],
+      "footwear": "chappals",
+      "jewelry": [],
+      "headwear": "none",
+      "grooming": "matchstick, forearm scar visible",
+      "sceneNumbers": [
+        5
+      ]
+    },
+    {
+      "canonicalId": "cos_ganpat_elder",
+      "characterId": "char_ganpat",
+      "label": "Ganpat elder inmate",
+      "garments": [
+        "worn vest or shirt",
+        "simple trousers"
+      ],
+      "fabrics": [
+        "thin cotton"
+      ],
+      "colors": [
+        "dusty white"
+      ],
+      "footwear": "bare or chappals",
+      "jewelry": [],
+      "headwear": "none",
+      "grooming": "white stubble",
+      "sceneNumbers": [
+        5
+      ]
+    }
+  ],
+  "scenes": [
+    {
+      "number": 1,
+      "slugline": "EXT. CENTRAL JAIL - MAIN GATE - DAY1",
+      "intExt": "EXT",
+      "locationId": "loc_jail_gate",
+      "subLocation": "",
+      "time": "DAY",
+      "dayDate": "Day One",
+      "weather": "hot",
+      "mood": "ominous arrival",
+      "summary": "EXT. CENTRAL JAIL - MAIN GATE - DAY1 A high wall the colour of old bone, topped with broken glass and rusted wire. A watchtower. A black iron gate set into the wall like a mouth. Above it, faded paint: a government seal, a motto no one reads. SUPER: \"पहला दिन\" / DAY ONE A p",
+      "dramaticPurpose": "Establish jail world",
+      "characterIds": [
+        "char_convict"
+      ],
+      "entrances": [],
+      "exits": [],
+      "production": {
+        "set": "EXT. CENTRAL JAIL - MAIN GATE - DAY1",
+        "costumes": [],
+        "grooming": [],
+        "jewelry": [],
+        "props": [],
+        "food": [],
+        "vehicles": [],
+        "animals": [],
+        "extras": [],
+        "rituals": [],
+        "gestures": [],
+        "soundMusic": [],
+        "culturalCues": [
+          "North Indian jail hierarchy (to be culturally remapped)"
+        ]
+      }
+    },
+    {
+      "number": 2,
+      "slugline": "INT. JAIL - INTAKE ROOM - DAY2",
+      "intExt": "INT",
+      "locationId": "loc_intake",
+      "subLocation": "",
+      "time": "DAY",
+      "dayDate": "Day One",
+      "weather": "hot",
+      "mood": "procedural dread",
+      "summary": "INT. JAIL - INTAKE ROOM - DAY2 A bare room. A ceiling fan pushing hot air in circles. A long counter, behind it a HEAD CLERK with a ledger and a stamp pad. A line of new prisoners shuffles forward, ankles loose, eyes on the floor. At the back — THE CONVICT. Young. Head down. A",
+      "dramaticPurpose": "Advance intake humiliation",
+      "characterIds": [
+        "char_convict",
+        "char_havaldar",
+        "char_head_clerk"
+      ],
+      "entrances": [],
+      "exits": [],
+      "production": {
+        "set": "INT. JAIL - INTAKE ROOM - DAY2",
+        "costumes": [],
+        "grooming": [],
+        "jewelry": [],
+        "props": [
+          "ledger",
+          "stamp pad",
+          "placard"
+        ],
+        "food": [],
+        "vehicles": [],
+        "animals": [],
+        "extras": [],
+        "rituals": [],
+        "gestures": [
+          "palm shove",
+          "eyes on floor"
+        ],
+        "soundMusic": [],
+        "culturalCues": [
+          "North Indian jail hierarchy (to be culturally remapped)"
+        ]
+      }
+    },
+    {
+      "number": 3,
+      "slugline": "INT. JAIL - INTAKE / STRIP AREA - CONTINUOUS3",
+      "intExt": "INT",
+      "locationId": "loc_intake",
+      "subLocation": "",
+      "time": "DAY",
+      "dayDate": "Day One",
+      "weather": "hot",
+      "mood": "procedural dread",
+      "summary": "INT. JAIL - INTAKE / STRIP AREA - CONTINUOUS3 A tin partition. The Convict's own clothes come off — his shirt, folded once by his own hands with a strange care, then thrown into a gunny sack. A coarse grey uniform tossed at his feet. As he pulls off the shirt, his hand closes f",
+      "dramaticPurpose": "Secret prop transfer",
+      "characterIds": [
+        "char_convict",
+        "char_havaldar"
+      ],
+      "entrances": [],
+      "exits": [],
+      "production": {
+        "set": "INT. JAIL - INTAKE / STRIP AREA - CONTINUOUS3",
+        "costumes": [],
+        "grooming": [],
+        "jewelry": [],
+        "props": [
+          "collar lump",
+          "gunny sack",
+          "grey uniform"
+        ],
+        "food": [],
+        "vehicles": [],
+        "animals": [],
+        "extras": [],
+        "rituals": [],
+        "gestures": [],
+        "soundMusic": [],
+        "culturalCues": [
+          "North Indian jail hierarchy (to be culturally remapped)"
+        ]
+      }
+    },
+    {
+      "number": 4,
+      "slugline": "INT. JAIL - CORRIDOR - CONTINUOUS4",
+      "intExt": "INT",
+      "locationId": "loc_corridor",
+      "subLocation": "",
+      "time": "DAY",
+      "dayDate": "Day One",
+      "weather": "hot",
+      "mood": "procedural dread",
+      "summary": "INT. JAIL - CORRIDOR - CONTINUOUS4 The Havaldar marches him down a long gallery. Cell doors. Faces at the bars, tracking the new meat. HAVALDAR (WALKING, ALMOST FRIENDLY NOW) सुन। यहाँ का उसूल सीधा है।",
+      "dramaticPurpose": "Advance intake humiliation",
+      "characterIds": [
+        "char_convict",
+        "char_havaldar"
+      ],
+      "entrances": [],
+      "exits": [
+        "char_convict"
+      ],
+      "production": {
+        "set": "INT. JAIL - CORRIDOR - CONTINUOUS4",
+        "costumes": [],
+        "grooming": [],
+        "jewelry": [],
+        "props": [],
+        "food": [],
+        "vehicles": [],
+        "animals": [],
+        "extras": [],
+        "rituals": [],
+        "gestures": [],
+        "soundMusic": [],
+        "culturalCues": [
+          "North Indian jail hierarchy (to be culturally remapped)"
+        ]
+      }
+    },
+    {
+      "number": 5,
+      "slugline": "INT. JAIL - BARRACK - DAY5",
+      "intExt": "INT",
+      "locationId": "loc_barrack",
+      "subLocation": "",
+      "time": "DAY",
+      "dayDate": "Day One",
+      "weather": "hot",
+      "mood": "predatory silence",
+      "summary": "INT. JAIL - BARRACK - DAY5 A long hall. Maybe thirty men. Bedrolls in rows, a stinking corner latrine, a barred window throwing bars of light across the concrete. The heat sits on everything like a hand. The room goes quiet. Thirty pairs of eyes. At the far end, on a raised bed",
+      "dramaticPurpose": "Introduce hierarchy and threat",
+      "characterIds": [
+        "char_convict",
+        "char_dagdu",
+        "char_ganpat",
+        "char_trusty"
+      ],
+      "entrances": [
+        "char_convict"
+      ],
+      "exits": [],
+      "production": {
+        "set": "INT. JAIL - BARRACK - DAY5",
+        "costumes": [],
+        "grooming": [],
+        "jewelry": [],
+        "props": [
+          "matchstick",
+          "tin trunk",
+          "bedrolls"
+        ],
+        "food": [],
+        "vehicles": [],
+        "animals": [],
+        "extras": [],
+        "rituals": [],
+        "gestures": [
+          "matchstick roll",
+          "room goes quiet"
+        ],
+        "soundMusic": [],
+        "culturalCues": [
+          "North Indian jail hierarchy (to be culturally remapped)"
+        ]
+      }
+    }
+  ],
+  "continuity": [
+    {
+      "sceneNumber": 1,
+      "before": [
+        {
+          "characterId": "char_convict",
+          "wearing": [
+            "civilian intake clothes"
+          ],
+          "carrying": [
+            "own shirt with sewn lump"
+          ],
+          "knows": [],
+          "injuries": [
+            "half-healed cut over eye"
+          ],
+          "gained": [],
+          "lost": [],
+          "notes": ""
+        }
+      ],
+      "after": [
+        {
+          "characterId": "char_convict",
+          "wearing": [
+            "civilian clothes"
+          ],
+          "carrying": [
+            "civilian clothes",
+            "collar lump sewn in shirt"
+          ],
+          "knows": [],
+          "injuries": [
+            "half-healed cut over eye"
+          ],
+          "gained": [],
+          "lost": [],
+          "notes": ""
+        }
+      ]
+    },
+    {
+      "sceneNumber": 2,
+      "before": [
+        {
+          "characterId": "char_convict",
+          "wearing": [
+            "civilian intake clothes"
+          ],
+          "carrying": [
+            "own shirt with sewn lump"
+          ],
+          "knows": [
+            "charges being announced"
+          ],
+          "injuries": [
+            "half-healed cut over eye"
+          ],
+          "gained": [],
+          "lost": [],
+          "notes": ""
+        }
+      ],
+      "after": [
+        {
+          "characterId": "char_convict",
+          "wearing": [
+            "civilian clothes"
+          ],
+          "carrying": [
+            "civilian clothes",
+            "collar lump sewn in shirt"
+          ],
+          "knows": [
+            "he is being marked"
+          ],
+          "injuries": [
+            "half-healed cut over eye"
+          ],
+          "gained": [
+            "number identity 613"
+          ],
+          "lost": [],
+          "notes": ""
+        }
+      ]
+    },
+    {
+      "sceneNumber": 3,
+      "before": [
+        {
+          "characterId": "char_convict",
+          "wearing": [
+            "grey jail uniform"
+          ],
+          "carrying": [
+            "hidden lump being transferred"
+          ],
+          "knows": [
+            "charges being announced"
+          ],
+          "injuries": [
+            "half-healed cut over eye"
+          ],
+          "gained": [],
+          "lost": [],
+          "notes": ""
+        }
+      ],
+      "after": [
+        {
+          "characterId": "char_convict",
+          "wearing": [
+            "grey jail uniform",
+            "613 placard"
+          ],
+          "carrying": [
+            "hidden collar lump (on body)",
+            "grey uniform"
+          ],
+          "knows": [
+            "he is being marked"
+          ],
+          "injuries": [
+            "half-healed cut over eye"
+          ],
+          "gained": [
+            "lump relocated on body"
+          ],
+          "lost": [
+            "civilian shirt"
+          ],
+          "notes": "Critical continuity: lump moves from collar to body before uniform on"
+        }
+      ]
+    },
+    {
+      "sceneNumber": 4,
+      "before": [
+        {
+          "characterId": "char_convict",
+          "wearing": [
+            "grey jail uniform"
+          ],
+          "carrying": [
+            "613 placard",
+            "hidden lump"
+          ],
+          "knows": [
+            "charges being announced"
+          ],
+          "injuries": [
+            "half-healed cut over eye"
+          ],
+          "gained": [],
+          "lost": [],
+          "notes": ""
+        }
+      ],
+      "after": [
+        {
+          "characterId": "char_convict",
+          "wearing": [
+            "grey jail uniform",
+            "613 placard"
+          ],
+          "carrying": [
+            "hidden collar lump (on body)",
+            "number placard 613",
+            "grey uniform"
+          ],
+          "knows": [
+            "he is being marked"
+          ],
+          "injuries": [
+            "half-healed cut over eye"
+          ],
+          "gained": [],
+          "lost": [],
+          "notes": ""
+        }
+      ]
+    },
+    {
+      "sceneNumber": 5,
+      "before": [
+        {
+          "characterId": "char_convict",
+          "wearing": [
+            "grey jail uniform"
+          ],
+          "carrying": [
+            "613 placard",
+            "hidden lump"
+          ],
+          "knows": [
+            "charges being announced"
+          ],
+          "injuries": [
+            "half-healed cut over eye"
+          ],
+          "gained": [],
+          "lost": [],
+          "notes": ""
+        }
+      ],
+      "after": [
+        {
+          "characterId": "char_convict",
+          "wearing": [
+            "grey jail uniform",
+            "613 placard"
+          ],
+          "carrying": [
+            "hidden collar lump (on body)",
+            "number placard 613",
+            "grey uniform"
+          ],
+          "knows": [
+            "barrack hierarchy",
+            "Dagdu's judgment"
+          ],
+          "injuries": [
+            "half-healed cut over eye"
+          ],
+          "gained": [],
+          "lost": [],
+          "notes": ""
+        }
+      ]
+    }
+  ],
+  "issues": [
+    {
+      "id": "missing_beat_2_char_havaldar",
+      "severity": "warning",
+      "message": "Important character Havaldar missing after-state in scene 2",
+      "sceneNumbers": [
+        2
+      ],
+      "entityIds": [
+        "char_havaldar"
+      ]
+    },
+    {
+      "id": "missing_beat_3_char_havaldar",
+      "severity": "warning",
+      "message": "Important character Havaldar missing after-state in scene 3",
+      "sceneNumbers": [
+        3
+      ],
+      "entityIds": [
+        "char_havaldar"
+      ]
+    },
+    {
+      "id": "missing_beat_4_char_havaldar",
+      "severity": "warning",
+      "message": "Important character Havaldar missing after-state in scene 4",
+      "sceneNumbers": [
+        4
+      ],
+      "entityIds": [
+        "char_havaldar"
+      ]
+    },
+    {
+      "id": "missing_beat_5_char_dagdu",
+      "severity": "warning",
+      "message": "Important character Dagdu missing after-state in scene 5",
+      "sceneNumbers": [
+        5
+      ],
+      "entityIds": [
+        "char_dagdu"
+      ]
+    },
+    {
+      "id": "missing_beat_5_char_ganpat",
+      "severity": "warning",
+      "message": "Important character Ganpat missing after-state in scene 5",
+      "sceneNumbers": [
+        5
+      ],
+      "entityIds": [
+        "char_ganpat"
+      ]
+    },
+    {
+      "id": "prop_gap_2_char_convict_collar_lump_sewn_in_shirt",
+      "severity": "warning",
+      "message": "Prop \"collar lump sewn in shirt\" on char_convict after scene 1 not reflected before scene 2",
+      "sceneNumbers": [
+        1,
+        2
+      ],
+      "entityIds": [
+        "char_convict"
+      ]
+    },
+    {
+      "id": "prop_gap_3_char_convict_collar_lump_sewn_in_shirt",
+      "severity": "warning",
+      "message": "Prop \"collar lump sewn in shirt\" on char_convict after scene 2 not reflected before scene 3",
+      "sceneNumbers": [
+        2,
+        3
+      ],
+      "entityIds": [
+        "char_convict"
+      ]
+    },
+    {
+      "id": "prop_gap_4_char_convict_hidden_collar_lump_on_body",
+      "severity": "warning",
+      "message": "Prop \"hidden collar lump (on body)\" on char_convict after scene 3 not reflected before scene 4",
+      "sceneNumbers": [
+        3,
+        4
+      ],
+      "entityIds": [
+        "char_convict"
+      ]
+    },
+    {
+      "id": "prop_gap_4_char_convict_grey_uniform",
+      "severity": "warning",
+      "message": "Prop \"grey uniform\" on char_convict after scene 3 not reflected before scene 4",
+      "sceneNumbers": [
+        3,
+        4
+      ],
+      "entityIds": [
+        "char_convict"
+      ]
+    },
+    {
+      "id": "prop_gap_5_char_convict_hidden_collar_lump_on_body",
+      "severity": "warning",
+      "message": "Prop \"hidden collar lump (on body)\" on char_convict after scene 4 not reflected before scene 5",
+      "sceneNumbers": [
+        4,
+        5
+      ],
+      "entityIds": [
+        "char_convict"
+      ]
+    },
+    {
+      "id": "prop_gap_5_char_convict_number_placard_613",
+      "severity": "warning",
+      "message": "Prop \"number placard 613\" on char_convict after scene 4 not reflected before scene 5",
+      "sceneNumbers": [
+        4,
+        5
+      ],
+      "entityIds": [
+        "char_convict"
+      ]
+    },
+    {
+      "id": "prop_gap_5_char_convict_grey_uniform",
+      "severity": "warning",
+      "message": "Prop \"grey uniform\" on char_convict after scene 4 not reflected before scene 5",
+      "sceneNumbers": [
+        4,
+        5
+      ],
+      "entityIds": [
+        "char_convict"
+      ]
+    }
+  ],
+  "visualPack": {
+    "characterImages": {},
+    "costumeImages": {},
+    "sceneImages": {},
+    "stylePrefix": "sample-run-without-live-images"
+  }
+}
