@@ -2,6 +2,7 @@
  * End-to-end sample regeneration against fixtures/sample-5scenes.txt.
  * Requires FREELLMAPI_* (or GOOGLE_API_KEY fallback) and POLLINATIONS_API_KEY.
  */
+import "dotenv/config";
 import { promises as fs } from "fs";
 import path from "path";
 import { createJob, saveJob, jobDir, loadJob } from "../src/lib/store";

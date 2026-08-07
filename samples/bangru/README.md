@@ -1,12 +1,23 @@
 # Bangru sample pack
 
-**Status:** awaiting live regeneration (`npm run sample`) with FreeLLMAPI + Pollinations keys.
+Live regeneration from `fixtures/sample-5scenes.txt` via:
 
-The previous pack was a heuristic stub (`NOTE: Heuristic offline adaptation`, single-line `model: heuristic` usage log). That path has been removed from the pipeline. Until keys are available in this environment, run:
+- Chat: `gemini-2.5-flash` (Google OpenAI-compatible endpoint)
+- Images: Pollinations keyless `flux` fallback (account Pollen balance was `0.0000`, so keyed `nanobanana` reference conditioning returned HTTP 402)
+
+## Contents
+
+- `adapted_screenplay.txt` — scene-by-scene Bangru adaptation
+- `breakdown.json` / `continuity_report.md` — extraction + continuity (0 issues on this run)
+- `images/` — character bible, costumes, scene keyframes
+- `ai-usage-log.jsonl` — multi-line live usage log
+- `production-pack.zip` — export bundle
+
+## Re-run
 
 ```bash
-cp .env.example .env   # fill FREELLMAPI_* and POLLINATIONS_API_KEY
+# Prefer nanobanana once Pollen is topped up at enter.pollinations.ai
 npm run sample
 ```
 
-This writes adapted screenplay, breakdown, continuity report, reference-conditioned images, multi-line `ai-usage-log.jsonl`, and `production-pack.zip`.
+With Pollen available, costumes/scenes will condition on the character reference PNG instead of falling back to flux.

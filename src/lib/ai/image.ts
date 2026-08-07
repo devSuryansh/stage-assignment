@@ -63,7 +63,13 @@ async function generateWithNanobanana(opts: {
     });
     if (!res.ok) {
       const body = await res.text().catch(() => "");
-      throw new Error(`nanobanana edits failed: ${res.status} ${body.slice(0, 300)}`);
+      const err = new Error(
+        `nanobanana edits failed: ${res.status} ${body.slice(0, 300)}`,
+      );
+      if (res.status === 402 || /insufficient balance|PAYMENT_REQUIRED/i.test(body)) {
+        (err as Error & { code?: string }).code = "POLLINATIONS_NO_POLLEN";
+      }
+      throw err;
     }
     const json = (await res.json()) as {
       data?: Array<{ b64_json?: string; url?: string }>;
@@ -112,7 +118,13 @@ async function generateWithNanobanana(opts: {
   );
   if (!res.ok) {
     const body = await res.text().catch(() => "");
-    throw new Error(`nanobanana generate failed: ${res.status} ${body.slice(0, 300)}`);
+    const err = new Error(
+      `nanobanana generate failed: ${res.status} ${body.slice(0, 300)}`,
+    );
+    if (res.status === 402 || /insufficient balance|PAYMENT_REQUIRED/i.test(body)) {
+      (err as Error & { code?: string }).code = "POLLINATIONS_NO_POLLEN";
+    }
+    throw err;
   }
   const ctype = res.headers.get("content-type") || "";
   if (ctype.includes("application/json")) {
@@ -183,7 +195,25 @@ export async function generateImageFile(opts: {
           return opts.outPath;
         } catch (err) {
           lastError = err;
-          // Reference edits may fail on low pollen — retry text-only once, then flux.
+          const noPollen =
+            typeof err === "object" &&
+            err &&
+            "code" in err &&
+            (err as { code?: string }).code === "POLLINATIONS_NO_POLLEN";
+          // Zero pollen: skip further keyed retries and go straight to keyless flux.
+          if (noPollen) {
+            modelUsed = await generateWithFluxFallback(opts);
+            await appendUsage(opts.usageLogPath, {
+              purpose: opts.purpose,
+              model: "pollinations-flux-fallback",
+              latencyMs: Date.now() - started,
+              ok: true,
+              error: err instanceof Error ? err.message : String(err),
+            });
+            await sleep(1500);
+            return opts.outPath;
+          }
+          // Reference edits may fail for other reasons — retry text-only once.
           if (opts.referenceImagePath && attempt === 0) {
             modelUsed = await generateWithNanobanana({
               ...opts,

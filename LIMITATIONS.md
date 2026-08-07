@@ -12,7 +12,9 @@ Bangru adaptation is produced by an LLM with an explicit culture-lock card (`स
 
 ## Image identity lock
 
-Reference conditioning (character bible → edits API) is the best free-tier identity lock we can ship. It is not LoRA / IP-Adapter grade. When Pollen is exhausted, the keyless `flux` fallback has **no** reference conditioning — faces will drift.
+Reference conditioning (character bible → Pollinations `/v1/images/edits` on `nanobanana`) is the intended identity lock. It is not LoRA / IP-Adapter grade.
+
+**Current sample pack:** the Pollinations account had **0.0000 Pollen**, so every keyed `nanobanana` call returned HTTP 402 and the pipeline fell back to keyless `flux`. That fallback has **no** reference conditioning — faces will drift across the pack. Top up Pollen (or enable Google image billing) and re-run `npm run sample` to restore the lock.
 
 ## Google image free tier
 

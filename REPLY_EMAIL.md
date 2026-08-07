@@ -7,9 +7,9 @@ Hi Ankit,
 Sharing my submission for the Cultural Screenplay & Visual Adaptation Studio assignment.
 
 - **Repo:** https://github.com/devSuryansh/stage-assignment
-- **Live URL:** _(add Vercel URL after deploy)_
-- **Demo video:** _(unlisted YouTube link)_
-- **Sample pack:** `samples/bangru/` in the repo
+- **Live URL:** _(pending valid Vercel token / MCP auth)_
+- **Demo video:** _(unlisted YouTube link — see DEMO_SCRIPT.md)_
+- **Sample pack:** `samples/bangru/` in the repo (live Gemini extraction + Bangru adapt; images currently flux fallback until Pollinations Pollen is topped up)
 
 Architecture in one line: format parser → two-pass LLM extraction → approval gate → scene-by-scene Bangru adaptation → character reference image → costume/scene images conditioned on that reference.
 

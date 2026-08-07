@@ -78,7 +78,7 @@ const LocationSchema = z.object({
 const SceneSkeletonSchema = z.object({
   number: z.number(),
   slugline: z.string().default(""),
-  intExt: z.enum(["INT", "EXT", "INT/EXT", "OTHER"]).default("OTHER"),
+  intExt: z.enum(["INT", "EXT", "INT/EXT", "OTHER"]).catch("OTHER"),
   locationId: z.string().default(""),
   subLocation: z.string().default(""),
   time: z.string().default(""),
@@ -162,6 +162,166 @@ function slugify(input: string): string {
     .replace(/[^a-z0-9]+/g, "_")
     .replace(/^_|_$/g, "")
     .slice(0, 48);
+}
+
+function asRecord(value: unknown): Record<string, unknown> {
+  return value && typeof value === "object" ? (value as Record<string, unknown>) : {};
+}
+
+function asString(value: unknown, fallback = ""): string {
+  return typeof value === "string" ? value : fallback;
+}
+
+function asStringArray(value: unknown): string[] {
+  if (Array.isArray(value)) return value.map((v) => String(v)).filter(Boolean);
+  if (typeof value === "string" && value.trim()) return [value.trim()];
+  return [];
+}
+
+function asNumberArray(value: unknown): number[] {
+  if (!Array.isArray(value)) return [];
+  return value.map((v) => Number(v)).filter((n) => Number.isFinite(n));
+}
+
+/** Coerce common LLM field aliases before zod validation. */
+function normalizePass1Payload(raw: unknown): unknown {
+  const root = asRecord(raw);
+  const characters = (Array.isArray(root.characters) ? root.characters : []).map((item) => {
+    const c = asRecord(item);
+    const name = asString(c.name || c.canonicalName);
+    const names = asStringArray(c.names);
+    if (name && !names.includes(name)) names.unshift(name);
+    const canonicalId =
+      asString(c.canonicalId || c.id || c.characterId) ||
+      (names[0] ? `char_${slugify(names[0])}` : "");
+    return {
+      ...c,
+      canonicalId,
+      names,
+      aliases: asStringArray(c.aliases),
+      age: asString(c.age),
+      role: asString(c.role),
+      relationships: asStringArray(c.relationships),
+      personality: asStringArray(c.personality),
+      dialect: asString(c.dialect),
+      physicalDescription: asString(c.physicalDescription || c.physical_description),
+      grooming: asString(c.grooming),
+      emotionalArc: asString(c.emotionalArc || c.emotional_arc),
+      identityLockPrompt: asString(c.identityLockPrompt || c.identity_lock_prompt),
+      important: Boolean(c.important ?? true),
+    };
+  });
+
+  const locations = (Array.isArray(root.locations) ? root.locations : []).map((item) => {
+    const loc = asRecord(item);
+    const name = asString(loc.name, "Unknown");
+    return {
+      ...loc,
+      canonicalId:
+        asString(loc.canonicalId || loc.id || loc.locationId) || `loc_${slugify(name)}`,
+      name,
+      aliases: asStringArray(loc.aliases),
+      description: asString(loc.description),
+      architectureCues: asString(loc.architectureCues || loc.architecture_cues),
+    };
+  });
+
+  const scenes = (Array.isArray(root.scenes) ? root.scenes : []).map((item) => {
+    const s = asRecord(item);
+    return {
+      ...s,
+      number: Number(s.number) || 0,
+      slugline: asString(s.slugline),
+      intExt: asString(s.intExt || s.int_ext, "OTHER"),
+      locationId: asString(s.locationId || s.location_id || s.location),
+      subLocation: asString(s.subLocation || s.sub_location),
+      time: asString(s.time),
+      dayDate: asString(s.dayDate || s.day_date),
+      weather: asString(s.weather),
+      mood: asString(s.mood),
+      summary: asString(s.summary),
+      dramaticPurpose: asString(s.dramaticPurpose || s.dramatic_purpose),
+      characterIds: asStringArray(s.characterIds || s.character_ids),
+      entrances: asStringArray(s.entrances),
+      exits: asStringArray(s.exits),
+    };
+  });
+
+  return { characters, locations, scenes };
+}
+
+function normalizePass2Payload(raw: unknown): unknown {
+  const root = asRecord(raw);
+  const production = asRecord(root.production);
+
+  const props = (Array.isArray(root.props) ? root.props : []).map((item) => {
+    const p = asRecord(item);
+    const name = asString(p.name, "prop");
+    return {
+      ...p,
+      canonicalId: asString(p.canonicalId || p.id) || `prop_${slugify(name)}`,
+      name,
+      aliases: asStringArray(p.aliases),
+      description: asString(p.description),
+      ownerCharacterId: asString(p.ownerCharacterId || p.owner_character_id) || undefined,
+    };
+  });
+
+  const costumes = (Array.isArray(root.costumes) ? root.costumes : []).map((item) => {
+    const c = asRecord(item);
+    const label = asString(c.label || c.name, "costume");
+    return {
+      ...c,
+      canonicalId: asString(c.canonicalId || c.id) || `cos_${slugify(label)}`,
+      characterId: asString(c.characterId || c.character_id),
+      label,
+      garments: asStringArray(c.garments),
+      fabrics: asStringArray(c.fabrics),
+      colors: asStringArray(c.colors),
+      footwear: asString(c.footwear),
+      jewelry: asStringArray(c.jewelry),
+      headwear: asString(c.headwear),
+      grooming: asString(c.grooming),
+      sceneNumbers: asNumberArray(c.sceneNumbers || c.scene_numbers),
+      changeReason: asString(c.changeReason || c.change_reason) || undefined,
+    };
+  });
+
+  const normalizeBeat = (item: unknown) => {
+    const b = asRecord(item);
+    return {
+      characterId: asString(b.characterId || b.character_id),
+      wearing: asStringArray(b.wearing),
+      carrying: asStringArray(b.carrying),
+      knows: asStringArray(b.knows),
+      injuries: asStringArray(b.injuries),
+      gained: asStringArray(b.gained),
+      lost: asStringArray(b.lost),
+      notes: asString(b.notes),
+    };
+  };
+
+  return {
+    production: {
+      set: asString(production.set),
+      costumes: asStringArray(production.costumes),
+      grooming: asStringArray(production.grooming),
+      jewelry: asStringArray(production.jewelry),
+      props: asStringArray(production.props),
+      food: asStringArray(production.food),
+      vehicles: asStringArray(production.vehicles),
+      animals: asStringArray(production.animals),
+      extras: asStringArray(production.extras),
+      rituals: asStringArray(production.rituals),
+      gestures: asStringArray(production.gestures),
+      soundMusic: asStringArray(production.soundMusic || production.sound_music),
+      culturalCues: asStringArray(production.culturalCues || production.cultural_cues),
+    },
+    props,
+    costumes,
+    before: (Array.isArray(root.before) ? root.before : []).map(normalizeBeat),
+    after: (Array.isArray(root.after) ? root.after : []).map(normalizeBeat),
+  };
 }
 
 /**
@@ -303,8 +463,10 @@ async function llmPass1(opts: {
     temperature: 0.15,
     system: `You extract a global screenplay skeleton for production breakdown.
 Return JSON: { characters, locations, scenes }.
-Merge aliases into one canonical character. Use stable ids: char_*, loc_*.
-Scenes must keep the provided scene numbers and sluglines. Map characterIds to canonical ids.
+Each character MUST include: canonicalId (char_*), names (array), aliases, age, role, physicalDescription, identityLockPrompt, important.
+Each location MUST include: canonicalId (loc_*), name, aliases, description, architectureCues.
+Each scene MUST include: number, slugline, intExt, locationId, time, mood, summary, dramaticPurpose, characterIds, entrances, exits.
+Merge aliases into one canonical character. Keep provided scene numbers/sluglines.
 identityLockPrompt must be a reusable visual lock (face, age, scars, build).
 Mark speaking leads important:true.`,
     user: `PARSER SKELETON (ground truth for scene cuts / cues):
@@ -314,7 +476,7 @@ FULL SCREENPLAY:
 ${opts.text.slice(0, 45000)}`,
   });
 
-  return Pass1Schema.parse(raw);
+  return Pass1Schema.parse(normalizePass1Payload(raw));
 }
 
 async function llmPass2Scene(opts: {
@@ -353,7 +515,7 @@ SCENE ${opts.sceneNumber} TEXT:
 ${opts.sceneRaw.slice(0, 12000)}`,
   });
 
-  return Pass2Schema.parse(raw);
+  return Pass2Schema.parse(normalizePass2Payload(raw));
 }
 
 export async function extractScreenplay(opts: {
