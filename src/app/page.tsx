@@ -8,23 +8,40 @@ export default async function HomePage() {
   const jobs = await listJobs();
 
   return (
-    <main className="mx-auto max-w-4xl px-4 py-10">
-      <p className="text-xs uppercase tracking-[0.2em] text-slate-500">
-        48-hour AI engineering challenge
+    <main className="mx-auto max-w-4xl px-4 py-12">
+      <p
+        className="animate-fade-up text-xs uppercase tracking-[0.22em]"
+        style={{ color: "var(--text-faint)" }}
+      >
+        STAGE · AI-native production pack
       </p>
       <h1
-        className="mt-2 text-4xl leading-tight text-slate-950 md:text-5xl"
-        style={{ fontFamily: "var(--font-display), serif" }}
+        className="animate-fade-up-delay mt-3 text-4xl leading-tight md:text-5xl"
+        style={{
+          fontFamily: "var(--font-display), sans-serif",
+          color: "var(--text-primary)",
+        }}
       >
         Cultural Adaptation Studio
       </h1>
-      <p className="mt-3 max-w-2xl text-slate-700">
-        Re-create a screenplay inside Bangru Haryanvi, keep continuity strict, and
-        build a character / costume / scene visual pack after you approve the plan.
+      <p className="mt-4 max-w-2xl" style={{ color: "var(--text-muted)" }}>
+        Adapt a screenplay into Bangru Haryanvi, lock continuity, then generate a
+        character / costume / scene visual pack — only after you approve.
       </p>
 
-      <section className="mt-10 rounded-lg border border-slate-300 bg-[#f4f7f9] p-6 shadow-sm">
-        <h2 className="text-lg font-semibold text-slate-900">1. Upload & select culture</h2>
+      <section
+        className="mt-10 p-6"
+        style={{
+          background: "var(--surface-panel)",
+          border: "1px solid var(--border-subtle)",
+        }}
+      >
+        <h2
+          className="text-lg font-semibold"
+          style={{ fontFamily: "var(--font-display), sans-serif" }}
+        >
+          Upload & select culture
+        </h2>
         <div className="mt-4">
           <UploadForm />
         </div>
@@ -32,18 +49,35 @@ export default async function HomePage() {
 
       {jobs.length ? (
         <section className="mt-10">
-          <h2 className="text-lg font-semibold">Recent jobs</h2>
-          <ul className="mt-3 divide-y divide-stone-300 rounded border border-slate-300 bg-[#f4f7f9]">
+          <h2
+            className="text-lg font-semibold"
+            style={{ fontFamily: "var(--font-display), sans-serif" }}
+          >
+            Recent jobs
+          </h2>
+          <ul
+            className="mt-3 divide-y"
+            style={{
+              background: "var(--surface-panel)",
+              border: "1px solid var(--border-subtle)",
+              borderColor: "var(--border-subtle)",
+            }}
+          >
             {jobs.slice(0, 8).map((job) => (
-              <li key={job.id} className="flex items-center justify-between px-4 py-3 text-sm">
+              <li
+                key={job.id}
+                className="flex items-center justify-between px-4 py-3 text-sm"
+                style={{ borderColor: "var(--border-subtle)" }}
+              >
                 <div>
                   <p className="font-medium">{job.primaryCulture.label}</p>
-                  <p className="text-slate-500">
+                  <p style={{ color: "var(--text-faint)" }}>
                     {job.sourceFilename || "pasted"} · {job.status}
                   </p>
                 </div>
                 <Link
-                  className="text-slate-900 underline"
+                  className="underline"
+                  style={{ color: "var(--accent-strong)" }}
                   href={`/jobs/${job.id}/extract`}
                 >
                   Open

@@ -8,7 +8,6 @@ export function UploadForm() {
   const [text, setText] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [setting, setSetting] = useState("rural");
-  const [bonus, setBonus] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -30,16 +29,6 @@ export function UploadForm() {
                 setting,
                 label: `Bangru Haryanvi (Haryana, ${setting})`,
               },
-              ...(bonus
-                ? [
-                    {
-                      dialect: "Malwai",
-                      region: "Malwa, Punjab",
-                      setting: "rural",
-                      label: "Malwai Punjabi (Malwa, rural)",
-                    },
-                  ]
-                : []),
             ],
           }),
         });
@@ -49,7 +38,6 @@ export function UploadForm() {
         form.set("dialect", "Bangru");
         form.set("region", "Haryana");
         form.set("setting", setting);
-        form.set("bonusCulture", String(bonus));
         if (file) form.set("file", file);
         res = await fetch("/api/jobs", { method: "POST", body: form });
       }
@@ -63,19 +51,30 @@ export function UploadForm() {
     }
   }
 
+  const fieldStyle = {
+    background: "var(--surface-raised)",
+    border: "1px solid var(--border-subtle)",
+    color: "var(--text-primary)",
+  } as const;
+
   return (
     <div className="space-y-6">
       <div className="grid gap-4 md:grid-cols-2">
         <label className="block space-y-2">
-          <span className="text-sm font-medium text-slate-700">Culture / dialect</span>
-          <div className="rounded border border-slate-300 bg-white px-3 py-2 text-slate-900">
+          <span className="text-sm font-medium" style={{ color: "var(--text-muted)" }}>
+            Culture / dialect
+          </span>
+          <div className="rounded px-3 py-2" style={fieldStyle}>
             Bangru Haryanvi · Haryana
           </div>
         </label>
         <label className="block space-y-2">
-          <span className="text-sm font-medium text-slate-700">Setting</span>
+          <span className="text-sm font-medium" style={{ color: "var(--text-muted)" }}>
+            Setting
+          </span>
           <select
-            className="w-full rounded border border-slate-300 bg-white px-3 py-2"
+            className="w-full rounded px-3 py-2"
+            style={fieldStyle}
             value={setting}
             onChange={(e) => setSetting(e.target.value)}
           >
@@ -86,19 +85,13 @@ export function UploadForm() {
         </label>
       </div>
 
-      <label className="flex items-center gap-2 text-sm text-slate-700">
-        <input
-          type="checkbox"
-          checked={bonus}
-          onChange={(e) => setBonus(e.target.checked)}
-        />
-        Also queue a second independent culture (Malwai) for bonus run metadata
-      </label>
-
       <label className="block space-y-2">
-        <span className="text-sm font-medium text-slate-700">Paste screenplay</span>
+        <span className="text-sm font-medium" style={{ color: "var(--text-muted)" }}>
+          Paste screenplay
+        </span>
         <textarea
-          className="min-h-48 w-full rounded border border-slate-300 bg-white p-3 font-mono text-sm"
+          className="min-h-48 w-full rounded p-3 font-mono text-sm"
+          style={fieldStyle}
           value={text}
           onChange={(e) => setText(e.target.value)}
           placeholder="Paste TXT screenplay here..."
@@ -106,7 +99,9 @@ export function UploadForm() {
       </label>
 
       <label className="block space-y-2">
-        <span className="text-sm font-medium text-slate-700">Or upload TXT / DOCX / PDF</span>
+        <span className="text-sm font-medium" style={{ color: "var(--text-muted)" }}>
+          Or upload TXT / DOCX / PDF
+        </span>
         <input
           type="file"
           accept=".txt,.md,.docx,.pdf"
@@ -115,7 +110,14 @@ export function UploadForm() {
       </label>
 
       {error ? (
-        <p className="rounded border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-800">
+        <p
+          className="rounded px-3 py-2 text-sm"
+          style={{
+            border: "1px solid var(--danger)",
+            color: "var(--danger)",
+            background: "rgba(248,113,113,0.08)",
+          }}
+        >
           {error}
         </p>
       ) : null}
@@ -125,7 +127,8 @@ export function UploadForm() {
           type="button"
           disabled={busy}
           onClick={() => submit(false)}
-          className="rounded bg-[#1f5c4d] px-4 py-2 text-sm text-[#f4f7f9] disabled:opacity-50"
+          className="rounded px-4 py-2 text-sm font-medium disabled:opacity-50"
+          style={{ background: "var(--accent)", color: "#1a1208" }}
         >
           {busy ? "Extracting…" : "Upload & extract"}
         </button>
@@ -133,7 +136,8 @@ export function UploadForm() {
           type="button"
           disabled={busy}
           onClick={() => submit(true)}
-          className="rounded border border-slate-400 bg-white px-4 py-2 text-sm text-slate-800 disabled:opacity-50"
+          className="rounded px-4 py-2 text-sm disabled:opacity-50"
+          style={fieldStyle}
         >
           Use 5-scene jail fixture (Bangru)
         </button>

@@ -1,38 +1,44 @@
 # Continuity Report
-Job: d26dc2b4-a854-4f9d-bf61-9b0015386005
+Job: 38259eb1-e477-4b4a-b474-8b332b65f41e
 Culture: Bangru Haryanvi (Haryana, rural)
-Generated: 2026-08-06T18:43:10.956Z
+Generated: 2026-08-07T20:18:32.651Z
 
-## Issues (12)
-- [warning] Important character Havaldar missing after-state in scene 2 (scenes: 2; entities: char_havaldar)
-- [warning] Important character Havaldar missing after-state in scene 3 (scenes: 3; entities: char_havaldar)
-- [warning] Important character Havaldar missing after-state in scene 4 (scenes: 4; entities: char_havaldar)
-- [warning] Important character Dagdu missing after-state in scene 5 (scenes: 5; entities: char_dagdu)
-- [warning] Important character Ganpat missing after-state in scene 5 (scenes: 5; entities: char_ganpat)
-- [warning] Prop "collar lump sewn in shirt" on char_convict after scene 1 not reflected before scene 2 (scenes: 1, 2; entities: char_convict)
-- [warning] Prop "collar lump sewn in shirt" on char_convict after scene 2 not reflected before scene 3 (scenes: 2, 3; entities: char_convict)
-- [warning] Prop "hidden collar lump (on body)" on char_convict after scene 3 not reflected before scene 4 (scenes: 3, 4; entities: char_convict)
-- [warning] Prop "grey uniform" on char_convict after scene 3 not reflected before scene 4 (scenes: 3, 4; entities: char_convict)
-- [warning] Prop "hidden collar lump (on body)" on char_convict after scene 4 not reflected before scene 5 (scenes: 4, 5; entities: char_convict)
-- [warning] Prop "number placard 613" on char_convict after scene 4 not reflected before scene 5 (scenes: 4, 5; entities: char_convict)
-- [warning] Prop "grey uniform" on char_convict after scene 4 not reflected before scene 5 (scenes: 4, 5; entities: char_convict)
+## Issues (0)
+- None flagged.
 
 ## Scene continuity
 ### Scene 1
-- char_convict: wearing=[civilian clothes] carrying=[civilian clothes; collar lump sewn in shirt] gained=[] lost=[] injuries=[half-healed cut over eye]
 ### Scene 2
-- char_convict: wearing=[civilian clothes] carrying=[civilian clothes; collar lump sewn in shirt] gained=[number identity 613] lost=[] injuries=[half-healed cut over eye]
+- char_convict: wearing=[] carrying=[] gained=[] lost=[] injuries=[]
+- char_havaldar: wearing=[] carrying=[] gained=[] lost=[] injuries=[]
+- char_head_clerk: wearing=[] carrying=[] gained=[] lost=[] injuries=[]
+- char_trusty: wearing=[] carrying=[] gained=[] lost=[] injuries=[]
 ### Scene 3
-- char_convict: wearing=[grey jail uniform; 613 placard] carrying=[hidden collar lump (on body); grey uniform] gained=[lump relocated on body] lost=[civilian shirt] injuries=[half-healed cut over eye]
-  note: Critical continuity: lump moves from collar to body before uniform on
+- char_convict: wearing=[cos_convict_grey_shirt] carrying=[prop_lump_mystery] gained=[cos_convict_grey_shirt; prop_lump_mystery] lost=[cos_convict_old_shirt] injuries=[]
+  note: Transferred a small, hard lump from his old shirt collar to a concealed location on his person.
+- char_havaldar: wearing=[] carrying=[] gained=[] lost=[] injuries=[]
+- char_head_clerk: wearing=[] carrying=[] gained=[] lost=[] injuries=[]
+- char_trusty: wearing=[] carrying=[] gained=[] lost=[] injuries=[]
+- char_dagdu: wearing=[] carrying=[] gained=[] lost=[] injuries=[]
+- char_ganpat: wearing=[] carrying=[] gained=[] lost=[] injuries=[]
 ### Scene 4
-- char_convict: wearing=[grey jail uniform; 613 placard] carrying=[hidden collar lump (on body); number placard 613; grey uniform] gained=[] lost=[] injuries=[half-healed cut over eye]
+- char_convict: wearing=[cos_convict_grey_shirt] carrying=[prop_lump_mystery] gained=[knowledge_jail_hierarchy; knowledge_rapist_dislike_in_jail] lost=[] injuries=[]
+  note: Shoved into the barrack.
+- char_havaldar: wearing=[] carrying=[] gained=[] lost=[] injuries=[]
+  note: Marches the Convict, explains rules, shoves him into the barrack.
+- char_head_clerk: wearing=[] carrying=[] gained=[] lost=[] injuries=[]
+- char_trusty: wearing=[] carrying=[] gained=[] lost=[] injuries=[]
+- char_dagdu: wearing=[] carrying=[] gained=[] lost=[] injuries=[]
+- char_ganpat: wearing=[] carrying=[] gained=[] lost=[] injuries=[]
 ### Scene 5
-- char_convict: wearing=[grey jail uniform; 613 placard] carrying=[hidden collar lump (on body); number placard 613; grey uniform] gained=[] lost=[] injuries=[half-healed cut over eye]
+- char_convict: wearing=[cos_convict_grey_shirt_numbered] carrying=[prop_lump_mystery; prop_convict_bedding] gained=[knowledge_jail_hierarchy; knowledge_rapist_dislike_in_jail; knowledge_dagdu_dominance; knowledge_assigned_worm_spot; knowledge_ganpat_sympathy] lost=[] injuries=[]
+  note: Humiliated, assigned the worst spot by the latrine, eyes down.
+- char_trusty: wearing=[] carrying=[] gained=[knowledge_convict_alleged_crimes] lost=[] injuries=[]
+  note: Subordinate to Dagdu, acts as an informer, grins at Convict's misfortune.
+- char_dagdu: wearing=[cos_dagdu_open_shirt] carrying=[prop_matchstick_dagdu] gained=[knowledge_convict_alleged_crimes; knowledge_barrack_dominance_confirmed] lost=[] injuries=[]
+  note: Confirmed as the 'king' of the barrack, cruel, dismissive of Ganpat's quiet challenge.
+- char_ganpat: wearing=[] carrying=[prop_folded_cloth_ganpat; prop_shelled_items_ganpat] gained=[knowledge_convict_alleged_crimes; knowledge_dagdu_cruelty; knowledge_grapevine_unreliability] lost=[] injuries=[]
+  note: Calm, wise, observant, shows a hint of sympathy for the Convict despite the barrack's judgment.
 
 ## Costume reuse
-- cos_convict_civilian (Convict civilian intake clothes) → character char_convict; scenes 1, 2; reason=n/a
-- cos_convict_uniform (Convict grey jail uniform + 613) → character char_convict; scenes 3, 4, 5; reason=Forced strip and uniform issue at intake
-- cos_havaldar_khaki (Havaldar khaki duty kit) → character char_havaldar; scenes 2, 3, 4, 5; reason=n/a
-- cos_dagdu_open_shirt (Dagdu open-shirt barrack boss) → character char_dagdu; scenes 5; reason=n/a
-- cos_ganpat_elder (Ganpat elder inmate) → character char_ganpat; scenes 5; reason=n/a
+- cos_prisoner_uniform (costume) → character ; scenes 2; reason=n/a

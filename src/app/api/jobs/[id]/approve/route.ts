@@ -6,6 +6,7 @@ import { detectContinuityIssues } from "@/lib/pipeline/dedupe";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const maxDuration = 300;
 
 export async function POST(
   req: Request,
@@ -25,13 +26,15 @@ export async function POST(
         extraction.continuity,
       );
       if (extraction.adaptationPlan) {
-        extraction.adaptationPlan.approved = true;
+        extraction.adaptationPlan.approved = Boolean(body.approved);
       }
       job.extraction = extraction;
       await saveJob(job);
     }
 
-    const result = await approveAndGenerate(id);
+    const result = await approveAndGenerate(id, {
+      approved: body.approved === true,
+    });
     return NextResponse.json(result);
   } catch (err) {
     return NextResponse.json(

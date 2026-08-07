@@ -1,217 +1,100 @@
 /* CULTURAL ADAPTATION: Bangru Haryanvi (Haryana, rural) */
 /* Dialect: Bangru | Region: Haryana | Setting: rural */
-/* NOTE: Heuristic offline adaptation. Prefer LLM path when FreeLLMAPI is available. */
 
-EXT. CENTRAL JAIL - MAIN GATE - DAY1
+EXT. CENTRAL JAIL - MAIN GATE - DAY
 
+एक ऊँची दीवार, पुराने हड्डी के रंग की, ऊपर टूटे शीशे अर जंग लगे तार. एक निगरानी बुर्ज. दीवार में एक काला लोहे का गेट, मुँह की ढाळ लागै सै. ऊपर, फीका रंग: एक सरकारी मोहर, एक नारा जिसे कोई कोन्या पढ़ता.
 
-A high wall the colour of old bone, topped with broken
-glass and rusted wire. A watchtower. A black iron gate
-set into the wall like a mouth. Above it, faded paint: a
-government seal, a motto no one reads.
+SUPER: "पहला दिन" / DAY ONE
 
+एक जेल की बस घिसड़ती हुई रुकै सै. गेट कराहता हुआ खुलै सै. वो बस नै निगल जा सै अर बंद हो जा सै.
 
-SUPER: "पहला   दिन" / DAY ONE
-A prison bus grinds to a halt. The gate groans open. It
-swallows the bus and shuts.
+INT. JAIL - INTAKE ROOM - DAY
 
+एक खाली कमरा. हड्डी के रंग की प्लास्टर की दीवारें. एक सीलिंग फैन गरम हवा नै गोल-गोल घुमावै सै. एक लंबी मेज, जिस्के पाच्छै एक HEAD CLERK अपनी बही अर मोहर के पैड के साथ बैठ्या सै. नए कैदियों की एक लाइन धीरे-धीरे आगै सरकै सै, टखने ढीले, आँखें नीची. पाच्छै — THE CONVICT. जवान. सिर नीचा. एक आँख पै आधा ठीक होया कट. हम उसका पूरा मुँह कोन्या देख पांदे. एक HAVALDAR (45) लाइन नै देखै सै — तोंद निकली हुई, बेपरवाह, एक आदमी जिसनै दस हज़ार आदमियां नै निपटाया सै अर अब वो इनमैं तै किसी नै कोन्या देखता. वो हर नए आए कैदी नै अपनी हथेली तै धक्का देकै उसकी जगह पै खड़ा करै सै.
 
+CONVICT मेज तक पहुँचै सै. हवलदार फाइल नै पढ़ै सै, फेर आराम तै दुबारा पढ़ै सै. कुछ उसमें ऐसा सै जो उसके मुँह नै बिगाड़ दे सै.
 
+<center>HAVALDAR</center>
+> (ऊँची आवाज़ में, कमरे में)
+> अरे देखो रे, देखो! के तगड़ा शिकार आया सै आज!
 
-INT. JAIL - INTAKE ROOM - DAY2
+सिर घूम जावैं सैं. हवलदार अपनी मोटी ऊँगली तै फाइल नै ठोकै सै.
 
+<center>HAVALDAR (CONT'D)</center>
+> (पढ़ते हुए, मज़ा लेते हुए)
+> अपहरण। बलात्कार। अर खून।
+> (एक धीमी सीटी)
+> तीनों काम इकट्ठे! पूरा ठेका ले लिया!
 
-A bare room. A ceiling fan pushing hot air in circles. A
-long counter, behind it a MUNSHI with a ledger and a
-stamp pad. A line of new prisoners shuffles forward,
-ankles loose, eyes on the floor. At the back — THE
-CONVICT. Young. Head down. A cut over one eye, half-
-healed. We do not see his full face. A HAVALDAR (THANEDAR-STYLE) (45)
-works the line — pot-bellied, unhurried, a man who has
-processed ten thousand men and stopped seeing any of
-them. He shoves each new arrival into place with the flat
-of his hand. The Convict reaches the counter. The
-Havaldar reads the file, then reads it again, slower.
-Something in it makes his mouth curl.
+दीवार के पास खड़े दो ट्रस्टी हँस पड़ैं सैं. CONVICT अपनी आँखें कोन्या उठाता.
 
+<center>HEAD CLERK</center>
+> (बोरियत से, मोहर तैयार)
+> नाम?
 
+CONVICT मुँह खोलै सै. कुछ कोन्या निकलै. उसका जबड़ा हिलै सै.
 
-                           HAVALDAR (THANEDAR-STYLE)
-                     (LOUD, TO THE ROOM)
-          अरे देखो-देखो यार! आज तगड़ा माल आया सै।
+<center>HAVALDAR</center>
+> (बीच में टोकते हुए, घृणा से)
+> नाम-वाम छोड़। इन खातर तो नंबर ए होवै सै।
 
+वो एक तख्ती, एक चॉक का टुकड़ा पकड़ै सै, उसपे एक नंबर [613] घसीटै सै, अर CONVICT की छाती पै चिपका दे सै.
 
-Heads turn. The Havaldar taps the file with one thick
-finger.
+<center>HAVALDAR (CONT'D)</center>
+> आज तै तू यो ए सै। अर कुछ कोन्या।
 
 
 
-                           HAVALDAR (THANEDAR-STYLE) (CONT'D)
-                     (READING, SAVOURING)
-          अपहरण। बलात्कार। और खून।
-                     (A LOW WHISTLE)
-          तीनों एक साथ। पूरा पैके ज।
+INT. JAIL - CORRIDOR - CONTINUOUS
 
+HAVALDAR CONVICT नै एक लंबी गैलरी में लेकै चालै सै. कोठड़ियां के किवाड़. जाळियां पाच्छै तै मुँह, नए शिकार नै घूरते हुए.
 
-Laughter from a couple of trusties near the wall. The
-Convict does not lift his eyes.
+<center>HAVALDAR</center>
+> (चालता हुआ, इब लगभग दोस्ताना)
+> सुण। यां का कायदा सीधा सै। जो ऊपर बैठ्या सै, वो भगवान। जो नीचै सै, वो कीड़ा।
+> (पाच्छै देखै सै)
+> अर तू — जो तूने कांड करया सै — तू तो कीड़े तै भी नीचै सै।
 
+वे एक मोटी जाळी के किवाड़ पै रुकैं सैं. उसकै पाच्छै बैरक सै.
 
+<center>HAVALDAR (CONT'D)</center>
+> बलात्कारी नै यां कोई मुँह कोन्या लांदा। जेल में भी मान-सम्मान का हिसाब होवै सै।
+> (कुंडी सरकावै सै)
+> राम तेरा भला करै।
 
-                           MUNSHI
-                     (BORED, STAMP POISED)
-          नांव तेरा के सै?
+वो CONVICT नै भीतर नै धकेल दे सै. किवाड़ धड़ाम तै बंद हो जा सै.
 
+INT. JAIL - BARRACK - DAY
 
-The Convict opens his mouth. Nothing comes. His jaw
-works.
+एक लंबी गैलरी. तीसेक आदमी होवेंगे. कतार में बिछाई हुई दरी-बिछाई, एक कोने में बदबूदार संडास, एक जाळीदार खिड़की जिस्में तै रोशनी की धारियां कंक्रीट पै पड़ैं सैं. गर्मी हर चीज़ पै एक हाथ की ढाळ बैठी सै. कमरा चुप हो जा सै. तीस जोड़ी आँखें.
 
+दूर एक सिरे पै, एक ऊँची चारपाई पै, जिस्पै एक तकिया अर एक छोटा टीन का संदूक धरया सै, इस जगह का राजा बैठ्या सै — DAGDU (40s). कमीज़ खुली हुई, एक बाजू पै ज़िप की ढाळ का निशान, दांतां कै बिचै एक माचिस की तीली. वो उठदा कोन्या. ताकत नै कदे उठणा कोन्या पड़ता. खिड़की कै कनै, पालथी मार कै, एक बुड्ढा आदमी बैठ्या सै जो एक मुड़े हुए कपड़े में कुछ छील रह्या सै. GANPAT (60s) — दुबला-पतला, सफ़ेद दाढ़ी, नदी में पत्थर की ढाळ शांत. उसकी आँखें ए कमरे में अकेली सैं जो क्रूर कोन्या — बस थकी हुई, अर देखण लागरही सैं.
 
+CONVICT किवाड़ कै भीतर ए खड़ा सै, छाती पै नंबर, अपनी लपेटी हुई दरी-बिछाई पकड़े हुए. दगडू कै कनै एक TRUSTY गलियारे की कानाफूसी सुण कै मुसकुरा दे सै, अर पूरे कमरे खातर बोलै सै.
 
-                           HAVALDAR (THANEDAR-STYLE)
-                     (CUTTING IN,
-                     CONTEMPTUOUS)
-          नांव-वांव छोड। इणका नांव नंबर होवै सै।
+<center>TRUSTY</center>
+> दगडू भाई — यो नया आया सै। बलात्कारी सै। अर एक छोरे नै भी मार राख्या सै।
 
+दगडू माचिस की तीली नै मुँह कै दूसरे कोने में ले जा सै. वो CONVICT नै उस लंबी, सुस्त ढाळ तै देखै सै जिस ढाळ तै एक कसाई लटकते हुए मांस नै देखै सै.
 
-He grabs a placard, a stub of chalk, scrawls a number
-[613] on it, and slaps it against the Convict's chest.
-                           HAVALDAR (THANEDAR-STYLE) (CONT'D)
-        आज से तू ये है। और कु छ नहीं।
+<center>DAGDU</center>
+> (कमरे तै, उस तै कोन्या)
+> म्हारे घर भी बहन-बेटियां सैं। ऐसे जानवर नै हम म्हारे बिचै कोन्या राखन दे। इसका तो मुँह देखण नै भी जी कोन्या करदा।
 
+वो माचिस की तीली तै संडास कै कोने में खाली फर्श पै एक जगह की तरफ इशारा करै सै — सबतै बुरी जगह, जित्तै बदबू आवै सै.
 
+<center>DAGDU (CONT'D)</center>
+> ओड़ै। कीड़े-मकोड़े की ढाळ पड़ा रह। या ए जगह सै तेरे लायक।
 
+कोई मदद करण नै कोन्या हिलदा. CONVICT कोने में जा सै अर अपनी दरी-बिछाई नै नीचै धर दे सै. धीरे तै. आँखें नीची.
 
-INT. JAIL - INTAKE / STRIP AREA - CONTINUOUS3
+<center>GANPAT</center>
+> (धीरे तै, छीलते हुए ऊपर देखे बिना)
+> सुणी-सुणाई पै ना जा, दगडू। यां कागज़ पढ़ के कोण आवै सै?
 
+<center>DAGDU</center>
+> (मज़े लेते हुए)
+> गणपत काका। बुड्ढे हो लिए, पर दया अभी भी कोन्या छोड़ी। कागज़ की के ज़रूरत सै? मुँह देख ले, बस।
 
-A tin partition. The Convict's own clothes come off — his
-shirt, folded once by his own hands with a strange care,
-then thrown into a gunny sack. A coarse grey uniform
-tossed at his feet. As he pulls off the shirt, his hand
-closes for half a second around the collar — a specific
-spot, a small hard lump sewn into the seam. He does not
-look at it. He simply, quickly, transfers it. Before the
-guard's eyes come back, his fingers have worked something
-out of the old collar and pressed it into the fist he
-keeps closed. We do not see what it is.
-
-
-
-                           HAVALDAR (THANEDAR-STYLE) (O.S.)
-        हिल जा रे। तेरे   ࣽ लिए रेड कारपेट नहीं ࣺ बिछा है।
-The Convict pulls on the grey shirt. The lump is gone —
-somewhere on him now. His fist opens, empty and innocent.
-
-
-
-
-INT. JAIL - CORRIDOR - CONTINUOUS4
-
-
-The Havaldar marches him down a long gallery. Cell doors.
-Faces at the bars, tracking the new meat.
-
-
-
-                           HAVALDAR (THANEDAR-STYLE)
-                   (WALKING, ALMOST
-                   FRIENDLY NOW)
-        सुन। यहाँ का उसूल सीधा है। जो ऊपर बैठा है,
-        वो भगवान। जो नीचे है, वो कीड़ा।
-                   (A GLANCE BACK)
-        और तू — तेरे के स के साथ — तू कीड़े से भी नीचे है।
-
-
-They stop at a heavy barred door. Beyond it, the barrack.
-
-
-
-                            HAVALDAR (THANEDAR-STYLE) (CONT'D)
-        बलात्कारी को यहाँ कोई पसंद नहीं करता। जेल
-        में भी इज़्ज़त का   ࣹ हसाब होता है।
-                    (SLIDING THE BOLT)
-        भगवान भला करे तेरा।
-
-
-He shoves the Convict in. The door clangs shut.
-
-
-
-
-INT. JAIL - BARRACK - DAY5
-
-
-A long hall. Maybe thirty men. Bedrolls in rows, a
-stinking corner latrine, a barred window throwing bars of
-light across the concrete. The heat sits on everything
-like a hand. The room goes quiet. Thirty pairs of eyes.
-At the far end, on a raised bedroll with an actual pillow
-and a small tin trunk, sits the king of this place —
-DAGDU (40s). Shirt open, a scar like a zip down one
-forearm, a matchstick working between his teeth. He does
-not get up. Power never has to. Beside the window, cross-
-legged, an OLD MAN sits shelling something into a folded
-cloth. GANPAT KAKA (60s) — spare, white-stubbled, calm as a
-stone in a river. His eyes are the only ones in the room
-that are not cruel — only tired, and watching. The
-Convict stands just inside the door, number on his chest,
-holding his rolled bedding. A TRUSTY (CHAUKIDAR INMATE) at Dagdu's side
-reads the whisper off the corridor grapevine and grins,
-calling it out for the whole room.
-
-
-
-                            TRUSTY (CHAUKIDAR INMATE)
-        दगडू भाई — नया वाला। बलात्कारी है। और एक लड़के
-        को भी मारके आया है।
-Dagdu rolls the matchstick to the other corner of his
-mouth. He studies the Convict the long, lazy way a
-butcher studies a hanging carcass.
-
-
-
-                            DAGDU
-                    (TO THE ROOM, NOT TO
-                    HIM)
-         हमारे घर भी बहन बेटियाँ हैं। ऐसे जानवर को हम अपने
-         बीच नहीं रखते।
-
-
-He points the matchstick at a spot on the bare floor by
-the latrine corner — the worst place, where the smell
-lives.
-
-
-
-                            DAGDU (CONT'D)
-         वहाँ। कीड़े के लायक जगह।
-
-
-Nobody moves to help. The Convict walks to the corner and
-sets his bedding down. Slowly. Eyes down.
-
-
-
-                            GANPAT KAKA
-                    (QUIETLY, WITHOUT
-                    LOOKING UP FROM HIS
-                    SHELLING)
-         सुनी-सुनाई पे मत जा, दगडू । कागज़ पढ़ के
-         कौन आता है यहाँ।
-
-
-
-                            DAGDU
-                    (AMUSED)
-         गणपत काका। बूढ़े हो गए, पर दया अभी भी बची है।
-                    (A HARD GRIN)
-         कागज़ की ज़रूरत नहीं। चेहरा पढ़ लो, बस।
-
-
-Ganpat says nothing more. He goes back to his shelling.
-But his eyes flick, once, to the young man in the corner
-— and hold there a moment longer than they need to.
-
-
-/* Bangru nonverbal notes: palm shove for authority; eyes down for submission; barrack raised bedroll = izzat seat; Ganpat Kaka uses elder mercy without breaking hierarchy. */
+गणपत कुछ कोन्या बोलदा. वो फेर तै छीलण लाग जा सै. पर उसकी आँखें एक बार, कोने में खड़े जवान आदमी की तरफ चमकैं सैं — अर जितनी देर ज़रूरत होवै सै, उसतै थोड़ी ज्यादा देर तक ओड़ै ए रुकैं सैं.

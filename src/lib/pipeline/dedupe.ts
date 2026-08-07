@@ -180,6 +180,69 @@ export function ensureIdentityLocks(characters: Character[]): Character[] {
   });
 }
 
+const PROP_STOPWORDS = new Set([
+  "a",
+  "an",
+  "the",
+  "of",
+  "in",
+  "on",
+  "with",
+  "and",
+  "his",
+  "her",
+  "their",
+  "own",
+  "into",
+  "from",
+  "to",
+  "for",
+  "at",
+  "by",
+  "sewn",
+  "hidden",
+  "being",
+  "transferred",
+  "body",
+]);
+
+/** Normalize prop phrases before comparison (strip parentheticals / stopwords). */
+export function normalizePropPhrase(input: string): string {
+  return input
+    .toLowerCase()
+    .replace(/\([^)]*\)/g, " ")
+    .replace(/[^a-z0-9\s]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+export function propTokens(input: string): Set<string> {
+  const norm = normalizePropPhrase(input);
+  return new Set(
+    norm
+      .split(" ")
+      .map((t) => t.trim())
+      .filter((t) => t.length > 1 && !PROP_STOPWORDS.has(t)),
+  );
+}
+
+/** Token-overlap match — catches "collar lump sewn in shirt" vs "own shirt with sewn lump". */
+export function propsMatch(a: string, b: string, threshold = 0.5): boolean {
+  const ta = propTokens(a);
+  const tb = propTokens(b);
+  if (!ta.size || !tb.size) {
+    return normalizePropPhrase(a) === normalizePropPhrase(b);
+  }
+  let overlap = 0;
+  for (const t of ta) if (tb.has(t)) overlap++;
+  const denom = Math.min(ta.size, tb.size);
+  return overlap / denom >= threshold;
+}
+
+function listHasProp(list: string[], item: string): boolean {
+  return list.some((x) => propsMatch(x, item));
+}
+
 export function detectContinuityIssues(
   characters: Character[],
   costumes: CostumeVariant[],
@@ -258,27 +321,25 @@ export function detectContinuityIssues(
     }
   }
 
-  // Prop transfer contradictions: gained then still carrying old without lost
-  for (let i = 1; i < continuity.length; i++) {
-    const prev = continuity[i - 1];
-    const curr = continuity[i];
+  // Prop transfer gaps using normalized token overlap (not exact string match)
+  const ordered = [...continuity].sort((a, b) => a.sceneNumber - b.sceneNumber);
+  for (let i = 1; i < ordered.length; i++) {
+    const prev = ordered[i - 1];
+    const curr = ordered[i];
     for (const after of prev.after) {
       const before = curr.before.find((b) => b.characterId === after.characterId);
       if (!before) continue;
       for (const item of after.carrying) {
-        const still = before.carrying.map((x) => x.toLowerCase()).includes(item.toLowerCase());
-        const lost = after.lost.map((x) => x.toLowerCase()).includes(item.toLowerCase());
-        if (!still && !lost && after.carrying.length) {
-          // soft signal only if item was notable
-          if (/lump|placard|number|shirt|uniform|match/i.test(item)) {
-            issues.push({
-              id: `prop_gap_${curr.sceneNumber}_${after.characterId}_${slugify(item)}`,
-              severity: "warning",
-              message: `Prop "${item}" on ${after.characterId} after scene ${prev.sceneNumber} not reflected before scene ${curr.sceneNumber}`,
-              sceneNumbers: [prev.sceneNumber, curr.sceneNumber],
-              entityIds: [after.characterId],
-            });
-          }
+        const still = listHasProp(before.carrying, item);
+        const lost = listHasProp(after.lost, item);
+        if (!still && !lost && item.trim()) {
+          issues.push({
+            id: `prop_gap_${curr.sceneNumber}_${after.characterId}_${slugify(item)}`,
+            severity: "warning",
+            message: `Prop "${item}" on ${after.characterId} after scene ${prev.sceneNumber} not reflected before scene ${curr.sceneNumber}`,
+            sceneNumbers: [prev.sceneNumber, curr.sceneNumber],
+            entityIds: [after.characterId],
+          });
         }
       }
     }

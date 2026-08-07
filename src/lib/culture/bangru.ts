@@ -7,9 +7,10 @@ export function buildBangruProfile(setting: SettingType = "rural"): CultureProfi
     setting,
     verbal: [
       "Bangru Haryanvi dialect with regional rhythm, not generic Hindi polish",
+      "Use सै not है, के not क्या, म्हारा/थारा, कोन्या for negation",
       "Honorifics: bhaiya, kaka, tau, chacha used by rank and age",
       "Kinship framing even among strangers (beta, puttar, bhai)",
-      "Blunt humor, teasing, and dry sarcasm under pressure",
+      "Blunt humor, teasing, and dry sarcasm under pressure — rework jokes, not transliterate",
       "Code-switching: official jail paperwork Hindi/English vs street Bangru",
       "Idioms around izzat, laaj, dharam, kheti metaphors where natural",
     ],
@@ -65,11 +66,5 @@ export const CULTURE_PRESETS = [
     region: "Haryana",
     setting: "urban" as const,
     label: "Bangru Haryanvi (Haryana, urban)",
-  },
-  {
-    dialect: "Malwai",
-    region: "Malwa, Punjab",
-    setting: "rural" as const,
-    label: "Malwai Punjabi (Malwa, rural) — bonus",
   },
 ];
