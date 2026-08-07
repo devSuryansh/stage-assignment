@@ -6,18 +6,18 @@ Runtime calls append JSON lines to each job's `ai-usage-log.jsonl` and to `sampl
 
 | purpose | model (typical) | notes |
 |---|---|---|
-| `extract_pass1_skeleton` | `gemini-3.5-flash` via FreeLLMAPI | global characters + scene skeleton |
+| `extract_pass1_skeleton` | `gemini-2.5-flash` | global characters + scene skeleton |
 | `extract_pass2_scene_N` | same | per-scene production + continuity |
 | `adapt_scene_N` | same | Bangru scene rewrite with prior-scene context |
-| `image_character_*` | `nanobanana` | text-only character bible |
-| `image_costume_*` | `nanobanana` (+ edits ref) | conditioned on character PNG |
-| `image_scene_*` | `nanobanana` (+ edits ref) | conditioned on character PNG |
+| `image_character_*` | `nanobanana` or `pollinations-flux-fallback` | text-only character bible |
+| `image_costume_*` | same (+ edits ref when Pollen available) | conditioned on character PNG when keyed path works |
+| `image_scene_*` | same (+ edits ref when Pollen available) | conditioned on character PNG when keyed path works |
 
-Failures are logged with `ok: false` and an `error` string. Flux fallbacks appear as `pollinations-flux-fallback`.
+Failures are logged with `ok: false` and an `error` string. Flux fallbacks appear as `pollinations-flux-fallback` (often with a 402 insufficient-balance note).
 
 ## Sample pack
 
-The committed `samples/bangru/ai-usage-log.jsonl` must be a **multi-line** live run, not a single `{"purpose":"sample_script","model":"heuristic"}` stub. Regenerate with:
+Committed `samples/bangru/ai-usage-log.jsonl` is a **23-line** live run (`gemini-2.5-flash` + flux fallback). Regenerate after topping up Pollen with:
 
 ```bash
 npm run sample
