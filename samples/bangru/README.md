@@ -1,7 +1,12 @@
 # Bangru sample pack
 
-Generated from fixtures/sample-5scenes.txt via heuristic pipeline (offline sample).
-Job id: d26dc2b4-a854-4f9d-bf61-9b0015386005
-Job dir: /home/suryansh/space/stage-assignment/data/jobs/d26dc2b4-a854-4f9d-bf61-9b0015386005
+**Status:** awaiting live regeneration (`npm run sample`) with FreeLLMAPI + Pollinations keys.
 
-Re-run with live FreeLLMAPI from the web UI for LLM adaptation + images.
+The previous pack was a heuristic stub (`NOTE: Heuristic offline adaptation`, single-line `model: heuristic` usage log). That path has been removed from the pipeline. Until keys are available in this environment, run:
+
+```bash
+cp .env.example .env   # fill FREELLMAPI_* and POLLINATIONS_API_KEY
+npm run sample
+```
+
+This writes adapted screenplay, breakdown, continuity report, reference-conditioned images, multi-line `ai-usage-log.jsonl`, and `production-pack.zip`.

@@ -38,7 +38,6 @@ export async function POST(req: NextRequest) {
       const dialect = String(form.get("dialect") || "Bangru");
       const region = String(form.get("region") || "Haryana");
       const setting = String(form.get("setting") || "rural") as SettingType;
-      const bonus = String(form.get("bonusCulture") || "") === "true";
 
       cultures = [
         {
@@ -48,14 +47,6 @@ export async function POST(req: NextRequest) {
           label: `${dialect} (${region}, ${setting})`,
         },
       ];
-      if (bonus) {
-        cultures.push({
-          dialect: "Malwai",
-          region: "Malwa, Punjab",
-          setting: "rural",
-          label: "Malwai Punjabi (Malwa, rural)",
-        });
-      }
 
       if (file && typeof file !== "string") {
         const buf = Buffer.from(await file.arrayBuffer());

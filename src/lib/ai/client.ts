@@ -1,20 +1,29 @@
 import OpenAI from "openai";
-import { promises as fs } from "fs";
-import path from "path";
 import { appendUsage } from "./usage";
+import { generateImageFile } from "./image";
 
-function getClient() {
+function freeLlmClient() {
   const baseURL = process.env.FREELLMAPI_BASE_URL || "http://localhost:3001/v1";
   const apiKey = process.env.FREELLMAPI_API_KEY || "freellmapi-missing";
   return new OpenAI({ baseURL, apiKey });
 }
 
+/** Direct Gemini OpenAI-compatible fallback when FreeLLMAPI is unreachable. */
+function geminiClient() {
+  const apiKey = process.env.GOOGLE_API_KEY;
+  if (!apiKey) return null;
+  return new OpenAI({
+    baseURL: "https://generativelanguage.googleapis.com/v1beta/openai/",
+    apiKey,
+  });
+}
+
 export function chatModel() {
-  return process.env.FREELLMAPI_CHAT_MODEL || "auto:smart";
+  return process.env.FREELLMAPI_CHAT_MODEL || "gemini-3.5-flash";
 }
 
 export function imageModel() {
-  return process.env.FREELLMAPI_IMAGE_MODEL || "auto";
+  return process.env.FREELLMAPI_IMAGE_MODEL || "nanobanana";
 }
 
 function sleep(ms: number) {
@@ -38,6 +47,50 @@ function extractJson(text: string): unknown {
   }
 }
 
+async function chatCompletion(opts: {
+  system: string;
+  user: string;
+  temperature?: number;
+  json?: boolean;
+}): Promise<{ content: string; model: string; usage?: OpenAI.Completions.CompletionUsage }> {
+  const model = chatModel();
+  const messages: OpenAI.Chat.ChatCompletionMessageParam[] = [
+    { role: "system", content: opts.system },
+    { role: "user", content: opts.user },
+  ];
+  const body: OpenAI.Chat.ChatCompletionCreateParamsNonStreaming = {
+    model,
+    temperature: opts.temperature ?? 0.3,
+    messages,
+  };
+  if (opts.json) {
+    body.response_format = { type: "json_object" };
+  }
+
+  try {
+    const resp = await freeLlmClient().chat.completions.create(body);
+    return {
+      content: resp.choices[0]?.message?.content ?? "",
+      model: resp.model || model,
+      usage: resp.usage,
+    };
+  } catch (primaryErr) {
+    const gemini = geminiClient();
+    if (!gemini) throw primaryErr;
+    const fallbackModel =
+      process.env.GOOGLE_CHAT_MODEL || "gemini-2.5-flash";
+    const resp = await gemini.chat.completions.create({
+      ...body,
+      model: fallbackModel,
+    });
+    return {
+      content: resp.choices[0]?.message?.content ?? "",
+      model: resp.model || fallbackModel,
+      usage: resp.usage,
+    };
+  }
+}
+
 export async function chatText(opts: {
   purpose: string;
   usageLogPath: string;
@@ -45,40 +98,31 @@ export async function chatText(opts: {
   user: string;
   temperature?: number;
 }): Promise<string> {
-  const client = getClient();
-  const model = chatModel();
   const started = Date.now();
   let lastError: unknown;
 
   for (let attempt = 0; attempt < 4; attempt++) {
     try {
-      const resp = await client.chat.completions.create({
-        model,
-        temperature: opts.temperature ?? 0.3,
-        messages: [
-          { role: "system", content: opts.system },
-          { role: "user", content: opts.user },
-        ],
+      const resp = await chatCompletion({
+        system: opts.system,
+        user: opts.user,
+        temperature: opts.temperature,
       });
-      const content = resp.choices[0]?.message?.content ?? "";
-      const routedVia =
-        (resp as unknown as { headers?: Record<string, string> }).headers?.[
-          "x-routed-via"
-        ] || undefined;
       await appendUsage(opts.usageLogPath, {
         purpose: opts.purpose,
-        model: resp.model || model,
-        routedVia,
+        model: resp.model,
         latencyMs: Date.now() - started,
         promptTokens: resp.usage?.prompt_tokens,
         completionTokens: resp.usage?.completion_tokens,
         ok: true,
       });
-      return content;
+      return resp.content;
     } catch (err) {
       lastError = err;
       const msg = err instanceof Error ? err.message : String(err);
-      const retryable = /429|rate|timeout|503|502|overloaded/i.test(msg);
+      const retryable = /429|rate|timeout|503|502|overloaded|ECONNREFUSED|fetch failed/i.test(
+        msg,
+      );
       if (!retryable || attempt === 3) break;
       await sleep(1500 * (attempt + 1));
     }
@@ -86,7 +130,7 @@ export async function chatText(opts: {
 
   await appendUsage(opts.usageLogPath, {
     purpose: opts.purpose,
-    model,
+    model: chatModel(),
     latencyMs: Date.now() - started,
     ok: false,
     error: lastError instanceof Error ? lastError.message : String(lastError),
@@ -101,24 +145,55 @@ export async function chatJson<T>(opts: {
   user: string;
   temperature?: number;
 }): Promise<T> {
-  const content = await chatText({
-    ...opts,
-    system:
-      opts.system +
-      "\n\nRespond with valid JSON only. No markdown fences unless required. No commentary.",
-  });
-  try {
-    return extractJson(content) as T;
-  } catch {
-    const repaired = await chatText({
-      purpose: opts.purpose + ":json_repair",
-      usageLogPath: opts.usageLogPath,
-      system: "Fix the following into valid JSON only. Preserve all fields.",
-      user: content,
-      temperature: 0,
-    });
-    return extractJson(repaired) as T;
+  const started = Date.now();
+  let lastError: unknown;
+  let content = "";
+
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      const resp = await chatCompletion({
+        system:
+          opts.system +
+          "\n\nRespond with valid JSON only. No markdown fences. No commentary.",
+        user: opts.user,
+        temperature: opts.temperature ?? 0.2,
+        json: true,
+      });
+      content = resp.content;
+      await appendUsage(opts.usageLogPath, {
+        purpose: opts.purpose,
+        model: resp.model,
+        latencyMs: Date.now() - started,
+        promptTokens: resp.usage?.prompt_tokens,
+        completionTokens: resp.usage?.completion_tokens,
+        ok: true,
+      });
+      try {
+        return extractJson(content) as T;
+      } catch {
+        const repaired = await chatText({
+          purpose: opts.purpose + ":json_repair",
+          usageLogPath: opts.usageLogPath,
+          system: "Fix the following into valid JSON only. Preserve all fields.",
+          user: content,
+          temperature: 0,
+        });
+        return extractJson(repaired) as T;
+      }
+    } catch (err) {
+      lastError = err;
+      await sleep(1200 * (attempt + 1));
+    }
   }
+
+  await appendUsage(opts.usageLogPath, {
+    purpose: opts.purpose,
+    model: chatModel(),
+    latencyMs: Date.now() - started,
+    ok: false,
+    error: lastError instanceof Error ? lastError.message : String(lastError),
+  });
+  throw lastError instanceof Error ? lastError : new Error(String(lastError));
 }
 
 export async function generateImage(opts: {
@@ -126,73 +201,17 @@ export async function generateImage(opts: {
   usageLogPath: string;
   prompt: string;
   outPath: string;
+  referenceImagePath?: string;
   size?: "1024x1024" | "1024x1792" | "1792x1024";
 }): Promise<string> {
-  const client = getClient();
-  const model = imageModel();
-  const started = Date.now();
-
-  try {
-    await fs.mkdir(path.dirname(opts.outPath), { recursive: true });
-
-    // Prefer OpenAI-compatible images API via FreeLLMAPI.
-    try {
-      const img = await client.images.generate({
-        model,
-        prompt: opts.prompt,
-        n: 1,
-        size: opts.size || "1024x1024",
-        response_format: "b64_json",
-      });
-      const b64 = img.data?.[0]?.b64_json;
-      const url = img.data?.[0]?.url;
-      if (b64) {
-        await fs.writeFile(opts.outPath, Buffer.from(b64, "base64"));
-      } else if (url) {
-        const res = await fetch(url);
-        if (!res.ok) throw new Error(`Image download failed: ${res.status}`);
-        const buf = Buffer.from(await res.arrayBuffer());
-        await fs.writeFile(opts.outPath, buf);
-      } else {
-        throw new Error("No image data returned");
-      }
-      await appendUsage(opts.usageLogPath, {
-        purpose: opts.purpose,
-        model,
-        latencyMs: Date.now() - started,
-        ok: true,
-      });
-      return opts.outPath;
-    } catch (primaryErr) {
-      // Fallback: keyless Pollinations (free open resource)
-      const encoded = encodeURIComponent(opts.prompt.slice(0, 1800));
-      const pollUrl = `https://image.pollinations.ai/prompt/${encoded}?width=1024&height=1024&nologo=true&seed=42`;
-      const res = await fetch(pollUrl);
-      if (!res.ok) {
-        throw primaryErr;
-      }
-      const buf = Buffer.from(await res.arrayBuffer());
-      await fs.writeFile(opts.outPath, buf);
-      await appendUsage(opts.usageLogPath, {
-        purpose: opts.purpose,
-        model: "pollinations-fallback",
-        latencyMs: Date.now() - started,
-        ok: true,
-        error:
-          primaryErr instanceof Error
-            ? `primary_failed:${primaryErr.message}`
-            : "primary_failed",
-      });
-      return opts.outPath;
-    }
-  } catch (err) {
-    await appendUsage(opts.usageLogPath, {
-      purpose: opts.purpose,
-      model,
-      latencyMs: Date.now() - started,
-      ok: false,
-      error: err instanceof Error ? err.message : String(err),
-    });
-    throw err;
-  }
+  const [w, h] = (opts.size || "1024x1024").split("x").map(Number);
+  return generateImageFile({
+    purpose: opts.purpose,
+    usageLogPath: opts.usageLogPath,
+    prompt: opts.prompt,
+    outPath: opts.outPath,
+    referenceImagePath: opts.referenceImagePath,
+    width: w,
+    height: h,
+  });
 }

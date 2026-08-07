@@ -4,6 +4,16 @@ import { STYLE_PREFIX } from "../schema";
 import { generateImage } from "../ai/client";
 import { jobDir } from "../store";
 
+const HARYANA_VISUAL = [
+  "bone-white lime plaster walls",
+  "khaki cotton, gamcha, pagdi where appropriate",
+  "brass and steel tumblers",
+  "dust-laden afternoon light",
+  "neem and peepal shade near compounds",
+  "rusted iron gates, barred windows, bare bulbs",
+  "rural Haryana jail/world authenticity recognizable without dialogue",
+].join(", ");
+
 function costumePrompt(extraction: ExtractionResult, costumeId: string): string {
   const costume = extraction.costumes.find((c) => c.canonicalId === costumeId);
   const character = extraction.characters.find((c) => c.canonicalId === costume?.characterId);
@@ -12,6 +22,7 @@ function costumePrompt(extraction: ExtractionResult, costumeId: string): string 
     STYLE_PREFIX,
     "full-body front view costume reference sheet",
     character.identityLockPrompt,
+    `same face as the character bible reference image`,
     `costume: ${costume.label}`,
     `garments: ${costume.garments.join(", ")}`,
     `fabrics: ${costume.fabrics.join(", ")}`,
@@ -20,7 +31,7 @@ function costumePrompt(extraction: ExtractionResult, costumeId: string): string 
     costume.jewelry.length ? `jewelry: ${costume.jewelry.join(", ")}` : "",
     costume.headwear ? `headwear: ${costume.headwear}` : "",
     `grooming: ${costume.grooming}`,
-    "Bangru Haryanvi / rural Haryana cultural authenticity",
+    HARYANA_VISUAL,
     "plain neutral backdrop, production design reference",
   ]
     .filter(Boolean)
@@ -33,15 +44,15 @@ function characterPrompt(extraction: ExtractionResult, characterId: string): str
   const costume = extraction.costumes.find((c) => c.characterId === characterId);
   return [
     STYLE_PREFIX,
-    "full-body character bible reference",
+    "full-body character bible portrait reference",
     character.identityLockPrompt,
     `role: ${character.role}`,
     `personality cues: ${character.personality.join(", ")}`,
     costume
       ? `wearing primary costume: ${costume.label}, ${costume.garments.join(", ")}`
       : character.grooming,
-    "Bangru Haryanvi rural Haryana casting authenticity",
-    "neutral backdrop, consistent proportions",
+    HARYANA_VISUAL,
+    "neutral backdrop, consistent proportions, sharp facial detail for identity lock",
   ]
     .filter(Boolean)
     .join(", ");
@@ -71,8 +82,8 @@ function scenePrompt(extraction: ExtractionResult, sceneNumber: number): string 
     `costumes locked: ${costumes}`,
     `props: ${scene.production.props.join(", ")}`,
     `gestures: ${scene.production.gestures.join(", ")}`,
-    "Bangru Haryanvi rural Haryana jail/world details, no cultural mixing",
-    "recognize culture from visuals alone",
+    HARYANA_VISUAL,
+    "faces must match provided character reference images",
   ]
     .filter(Boolean)
     .join(", ");
@@ -91,6 +102,9 @@ export async function generateVisualPack(opts: {
     stylePrefix: STYLE_PREFIX,
   };
 
+  const characterAbs = new Map<string, string>();
+
+  // Stage 1: character bible portraits (text only) — identity lock source.
   const important = opts.extraction.characters.filter((c) => c.important);
   for (const character of important) {
     const rel = path.join("images", "characters", `${character.canonicalId}.png`);
@@ -103,9 +117,10 @@ export async function generateVisualPack(opts: {
     });
     pack.characterImages[character.canonicalId] = rel;
     character.imagePath = rel;
+    characterAbs.set(character.canonicalId, abs);
   }
 
-  // Unique costumes only once
+  // Stage 2a: costume sheets conditioned on character reference.
   for (const costume of opts.extraction.costumes) {
     const rel = path.join("images", "costumes", `${costume.canonicalId}.png`);
     const abs = path.join(base, rel);
@@ -114,19 +129,25 @@ export async function generateVisualPack(opts: {
       usageLogPath: opts.usageLogPath,
       prompt: costumePrompt(opts.extraction, costume.canonicalId),
       outPath: abs,
+      referenceImagePath: characterAbs.get(costume.characterId),
     });
     pack.costumeImages[costume.canonicalId] = rel;
     costume.imagePath = rel;
   }
 
+  // Stage 2b: scene keyframes conditioned on the first important character present.
   for (const scene of opts.extraction.scenes) {
     const rel = path.join("images", "scenes", `scene_${scene.number}.png`);
     const abs = path.join(base, rel);
+    const refId =
+      scene.characterIds.find((id) => characterAbs.has(id)) ||
+      important[0]?.canonicalId;
     await generateImage({
       purpose: `image_scene_${scene.number}`,
       usageLogPath: opts.usageLogPath,
       prompt: scenePrompt(opts.extraction, scene.number),
       outPath: abs,
+      referenceImagePath: refId ? characterAbs.get(refId) : undefined,
     });
     pack.sceneImages[String(scene.number)] = rel;
     scene.imagePath = rel;

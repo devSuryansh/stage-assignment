@@ -1,6 +1,35 @@
-import type { CultureSelection, ExtractionResult } from "../schema";
+import type { CultureSelection, ExtractionResult, Scene } from "../schema";
 import { chatText } from "../ai/client";
 import { buildBangruProfile } from "../culture/bangru";
+import { parseScreenplay } from "../parse/screenplay";
+
+function cultureLockCard(culture: CultureSelection): string {
+  const profile = buildBangruProfile(culture.setting);
+  return `
+CULTURE LOCK — ${culture.label}
+Dialect: ${profile.dialect}. Region: ${profile.region}. Setting: ${profile.setting}.
+
+Write Bangru as spoken in Haryana:
+- सै not है
+- के not क्या
+- म्हारा not हमारा
+- थारा not तुम्हारा
+- कोन्या for negation
+- Honorifics by rank/age: bhaiya, kaka, tau, puttar
+
+Do NOT translate Hindi line-by-line. Replace jokes, insults, and threats so a Haryanvi speaker recognises them as theirs.
+Forbidden failure mode: polished Hindi with one Haryanvi word sprinkled in.
+Keep scene headings, scene count, dramatic function, and critical prop/continuity beats intact.
+Nonverbal: ${profile.nonverbal.slice(0, 3).join("; ")}.
+Architecture/wardrobe cues stay culturally exact Bangru/Haryana — never a generic North-Indian mashup.
+`.trim();
+}
+
+function sceneBlock(originalText: string, scene: Scene): string {
+  const parsed = parseScreenplay(originalText);
+  const match = parsed.scenes.find((s) => s.number === scene.number);
+  return match?.rawText || scene.slugline;
+}
 
 export async function adaptScreenplay(opts: {
   originalText: string;
@@ -9,23 +38,24 @@ export async function adaptScreenplay(opts: {
   usageLogPath: string;
 }): Promise<string> {
   const plan = opts.extraction.adaptationPlan;
-  const profile = plan?.culture || buildBangruProfile(opts.culture.setting);
+  const lock = cultureLockCard(opts.culture);
+  const scenes = opts.extraction.scenes;
+  const adaptedScenes: string[] = [];
 
-  try {
+  for (const scene of scenes) {
+    const previous = adaptedScenes.join("\n\n---\n\n");
+    const originalScene = sceneBlock(opts.originalText, scene);
+
     const adapted = await chatText({
-      purpose: "adapt_screenplay_bangru",
+      purpose: `adapt_scene_${scene.number}`,
       usageLogPath: opts.usageLogPath,
       temperature: 0.55,
-      system: `You are a cultural screenplay adaptation specialist.
-Rewrite the screenplay so it feels native to the target culture, NOT translated or decorated.
-Keep scene headings structure, scene count, character dramatic functions, and critical prop/continuity beats.
-Preserve the collar-lump transfer and number placard 613 continuity exactly.
-Output screenplay format only.`,
-      user: `TARGET CULTURE PROFILE:
-${JSON.stringify(profile, null, 2)}
-
-ADAPTATION PLAN:
-${JSON.stringify(plan, null, 2)}
+      system: `You are a cultural screenplay adaptation specialist for Bangru Haryanvi.
+${lock}
+Output this scene in screenplay format only. No commentary.`,
+      user: `ADAPTATION PLAN SUMMARY:
+${plan?.settingRemap || ""}
+${plan?.costumePlanSummary || ""}
 
 CANONICAL CHARACTERS:
 ${JSON.stringify(
@@ -38,48 +68,16 @@ ${JSON.stringify(
   2,
 )}
 
-ORIGINAL SCREENPLAY:
-${opts.originalText.slice(0, 45000)}`,
+PREVIOUSLY ADAPTED SCENES (keep names, honorifics, register stable):
+${previous.slice(-12000) || "(none — this is scene 1)"}
+
+ORIGINAL SCENE ${scene.number}:
+${originalScene}`,
     });
-    return adapted.trim();
-  } catch {
-    return bangruHeuristicAdaptation(opts.originalText, opts.culture);
-  }
-}
 
-/** Offline/demo adaptation stub with clear Bangru markers when LLM unavailable */
-export function bangruHeuristicAdaptation(
-  original: string,
-  culture: CultureSelection,
-): string {
-  const header = `/* CULTURAL ADAPTATION: ${culture.label} */
-/* Dialect: ${culture.dialect} | Region: ${culture.region} | Setting: ${culture.setting} */
-/* NOTE: Heuristic offline adaptation. Prefer LLM path when FreeLLMAPI is available. */
-
-`;
-
-  let text = original;
-  const replacements: Array<[RegExp, string]> = [
-    [/HAVALDAR/g, "HAVALDAR (THANEDAR-STYLE)"],
-    [/HEAD CLERK/g, "MUNSHI"],
-    [/DAGDU/g, "DAGDU"],
-    [/GANPAT/g, "GANPAT KAKA"],
-    [/TRUSTY/g, "TRUSTY (CHAUKIDAR INMATE)"],
-    [/THE CONVICT/g, "THE CONVICT"],
-    [/अरे देखो देखो। बड़ा माल आया है आज।/g, "अरे देखो-देखो यार! आज तगड़ा माल आया सै।"],
-    [/नाम\?/g, "नांव तेरा के सै?"],
-    [/नाम-वाम रहने दे। इनका नाम नंबर होता है।/g, "नांव-वांव छोड। इणका नांव नंबर होवै सै।"],
-    [/आज से तू ये है। और कुछ नहीं।/g, "आज तै तू ये सै। होर कुच्छ नहीं।"],
-    [/जल्दी कर।/g, "हिल जा रे।"],
-  ];
-
-  for (const [from, to] of replacements) {
-    text = text.replace(from, to);
+    adaptedScenes.push(adapted.trim());
   }
 
-  return (
-    header +
-    text +
-    `\n\n/* Bangru nonverbal notes: palm shove for authority; eyes down for submission; barrack raised bedroll = izzat seat; Ganpat Kaka uses elder mercy without breaking hierarchy. */\n`
-  );
+  const header = `/* CULTURAL ADAPTATION: ${opts.culture.label} */\n/* Dialect: ${opts.culture.dialect} | Region: ${opts.culture.region} | Setting: ${opts.culture.setting} */\n\n`;
+  return header + adaptedScenes.join("\n\n");
 }

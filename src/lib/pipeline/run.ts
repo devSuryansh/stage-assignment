@@ -24,10 +24,26 @@ export async function runExtraction(jobId: string) {
   }
 }
 
-export async function approveAndGenerate(jobId: string) {
+export async function approveAndGenerate(
+  jobId: string,
+  opts: { approved?: boolean } = {},
+) {
   const job = await loadJob(jobId);
   if (!job) throw new Error("Job not found");
   if (!job.extraction) throw new Error("Extraction missing");
+
+  if (job.status === "ready") {
+    throw new Error("Job already generated; re-approval refused");
+  }
+  if (job.status !== "awaiting_approval") {
+    throw new Error(
+      `Job must be awaiting_approval (current: ${job.status})`,
+    );
+  }
+  if (opts.approved !== true) {
+    throw new Error("Explicit approved:true required");
+  }
+
   if (job.extraction.issues.some((i) => i.severity === "error")) {
     throw new Error("Resolve continuity errors before generation");
   }
@@ -63,7 +79,6 @@ export async function approveAndGenerate(jobId: string) {
       usageLogPath: fresh.usageLogPath,
     });
 
-    // persist image paths back onto extraction entities
     const updatedExtraction = { ...fresh.extraction };
     for (const c of updatedExtraction.characters) {
       if (visualPack.characterImages[c.canonicalId]) {

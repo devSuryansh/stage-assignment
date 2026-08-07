@@ -1,8 +1,13 @@
+/**
+ * End-to-end sample regeneration against fixtures/sample-5scenes.txt.
+ * Requires FREELLMAPI_* (or GOOGLE_API_KEY fallback) and POLLINATIONS_API_KEY.
+ */
 import { promises as fs } from "fs";
 import path from "path";
-import { createJob, saveJob, jobDir } from "../src/lib/store";
-import { heuristicExtract } from "../src/lib/pipeline/extract";
-import { bangruHeuristicAdaptation } from "../src/lib/pipeline/adapt";
+import { createJob, saveJob, jobDir, loadJob } from "../src/lib/store";
+import { extractScreenplay } from "../src/lib/pipeline/extract";
+import { adaptScreenplay } from "../src/lib/pipeline/adapt";
+import { generateVisualPack } from "../src/lib/pipeline/visuals";
 import {
   buildBreakdown,
   buildContinuityReport,
@@ -21,35 +26,61 @@ async function main() {
     cultures: [BANGRU_DEFAULT],
   });
 
-  const extraction = heuristicExtract(fixture);
+  const extraction = await extractScreenplay({
+    text: fixture,
+    usageLogPath: job.usageLogPath,
+    culture: BANGRU_DEFAULT,
+    useHeuristicFallback: false,
+  });
   if (extraction.adaptationPlan) extraction.adaptationPlan.approved = true;
-  const adapted = bangruHeuristicAdaptation(fixture, BANGRU_DEFAULT);
 
   job.extraction = extraction;
-  job.adaptedScreenplay = adapted;
-  job.status = "ready";
+  job.status = "adapting";
   job.approvedAt = new Date().toISOString();
-  job.visualPack = {
-    characterImages: {},
-    costumeImages: {},
-    sceneImages: {},
-    stylePrefix: "sample-run-without-live-images",
-  };
   await saveJob(job);
 
-  await fs.appendFile(
-    job.usageLogPath,
-    JSON.stringify({
-      ts: new Date().toISOString(),
-      purpose: "sample_script",
-      model: "heuristic",
-      latencyMs: 0,
-      ok: true,
-    }) + "\n",
-  );
+  const adapted = await adaptScreenplay({
+    originalText: fixture,
+    extraction,
+    culture: BANGRU_DEFAULT,
+    usageLogPath: job.usageLogPath,
+  });
+  job.adaptedScreenplay = adapted;
+  job.status = "generating";
+  await saveJob(job);
+
+  const visualPack = await generateVisualPack({
+    jobId: job.id,
+    extraction,
+    usageLogPath: job.usageLogPath,
+  });
+
+  for (const c of extraction.characters) {
+    if (visualPack.characterImages[c.canonicalId]) {
+      c.imagePath = visualPack.characterImages[c.canonicalId];
+    }
+  }
+  for (const c of extraction.costumes) {
+    if (visualPack.costumeImages[c.canonicalId]) {
+      c.imagePath = visualPack.costumeImages[c.canonicalId];
+    }
+  }
+  for (const s of extraction.scenes) {
+    if (visualPack.sceneImages[String(s.number)]) {
+      s.imagePath = visualPack.sceneImages[String(s.number)];
+    }
+  }
+
+  job.extraction = extraction;
+  job.visualPack = visualPack;
+  job.status = "ready";
+  await saveJob(job);
 
   const outDir = path.join(process.cwd(), "samples", "bangru");
-  await fs.mkdir(outDir, { recursive: true });
+  await fs.mkdir(path.join(outDir, "images", "characters"), { recursive: true });
+  await fs.mkdir(path.join(outDir, "images", "costumes"), { recursive: true });
+  await fs.mkdir(path.join(outDir, "images", "scenes"), { recursive: true });
+
   await fs.writeFile(path.join(outDir, "adapted_screenplay.txt"), adapted);
   await fs.writeFile(
     path.join(outDir, "breakdown.json"),
@@ -61,15 +92,29 @@ async function main() {
   );
   await fs.copyFile(job.usageLogPath, path.join(outDir, "ai-usage-log.jsonl"));
 
+  const imagesDir = path.join(jobDir(job.id), "images");
+  await fs.cp(imagesDir, path.join(outDir, "images"), { recursive: true });
+
   const zip = await exportJobZip(job);
   await fs.writeFile(path.join(outDir, "production-pack.zip"), zip);
 
   await fs.writeFile(
     path.join(outDir, "README.md"),
-    `# Bangru sample pack\n\nGenerated from fixtures/sample-5scenes.txt via heuristic pipeline (offline sample).\nJob id: ${job.id}\nJob dir: ${jobDir(job.id)}\n\nRe-run with live FreeLLMAPI from the web UI for LLM adaptation + images.\n`,
+    `# Bangru sample pack
+
+Generated from fixtures/sample-5scenes.txt via the live two-pass extraction + scene-by-scene adaptation + reference-conditioned image pipeline.
+
+- Job id: ${job.id}
+- Job dir: ${jobDir(job.id)}
+- Chat model: ${process.env.FREELLMAPI_CHAT_MODEL || "gemini-3.5-flash"}
+- Image model: ${process.env.POLLINATIONS_IMAGE_MODEL || "nanobanana"}
+
+Re-run: \`npm run sample\` with keys loaded.
+`,
   );
 
-  console.log("Wrote samples/bangru for job", job.id);
+  const fresh = await loadJob(job.id);
+  console.log("Wrote samples/bangru for job", fresh?.id, "status", fresh?.status);
 }
 
 main().catch((err) => {

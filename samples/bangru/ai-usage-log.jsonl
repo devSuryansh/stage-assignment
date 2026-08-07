@@ -1,1 +1,1 @@
-{"ts":"2026-08-06T18:43:10.955Z","purpose":"sample_script","model":"heuristic","latencyMs":0,"ok":true}
+{"ts":"pending","purpose":"sample_pending_live_keys","model":"none","ok":false,"error":"Run npm run sample with FREELLMAPI_API_KEY and POLLINATIONS_API_KEY"}

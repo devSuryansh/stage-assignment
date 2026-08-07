@@ -18,17 +18,37 @@ export function JobNav({
   status?: string;
 }) {
   return (
-    <header className="border-b border-slate-300 bg-[#f4f7f9]">
+    <header
+      style={{
+        borderBottom: "1px solid var(--border-subtle)",
+        background: "var(--surface-raised)",
+      }}
+    >
       <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-3">
         <div>
-          <Link href="/" className="text-sm font-medium text-slate-600 hover:text-slate-900">
+          <Link
+            href="/"
+            className="text-sm font-medium"
+            style={{ color: "var(--text-muted)" }}
+          >
             ← Studio
           </Link>
-          <p className="font-[family-name:var(--font-display)] text-xl text-slate-900">
+          <p
+            className="text-xl"
+            style={{
+              fontFamily: "var(--font-display), sans-serif",
+              color: "var(--text-primary)",
+            }}
+          >
             Job {jobId.slice(0, 8)}
           </p>
           {status ? (
-            <p className="text-xs uppercase tracking-wide text-slate-500">{status}</p>
+            <p
+              className="text-xs uppercase tracking-wide"
+              style={{ color: "var(--text-faint)" }}
+            >
+              {status}
+            </p>
           ) : null}
         </div>
         <nav className="flex flex-wrap gap-1">
@@ -38,11 +58,12 @@ export function JobNav({
               <Link
                 key={step.slug}
                 href={`/jobs/${jobId}/${step.slug}`}
-                className={`rounded px-3 py-1.5 text-sm ${
+                className="rounded px-3 py-1.5 text-sm"
+                style={
                   active
-                    ? "bg-[#1f5c4d] text-[#f4f7f9]"
-                    : "text-slate-700 hover:bg-slate-200"
-                }`}
+                    ? { background: "var(--accent)", color: "#1a1208" }
+                    : { color: "var(--text-muted)" }
+                }
               >
                 {step.label}
               </Link>

@@ -21,11 +21,11 @@ export default async function ApprovePage({
         <div>
           <h1
             className="text-3xl"
-            style={{ fontFamily: "var(--font-display), serif" }}
+            style={{ fontFamily: "var(--font-display), sans-serif" }}
           >
             Approve extraction & costume plan
           </h1>
-          <p className="mt-1 text-slate-600">
+          <p className="mt-1" style={{ color: "var(--text-muted)" }}>
             Visual generation stays locked until you approve. Continuity errors must be
             cleared first.
           </p>

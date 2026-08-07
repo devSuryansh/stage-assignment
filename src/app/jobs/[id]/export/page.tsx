@@ -21,21 +21,28 @@ export default async function ExportPage({
       <main className="mx-auto max-w-4xl space-y-6 px-4 py-8">
         <h1
           className="text-3xl"
-          style={{ fontFamily: "var(--font-display), serif" }}
+          style={{ fontFamily: "var(--font-display), sans-serif" }}
         >
           Continuity report & export
         </h1>
-        <p className="text-slate-600">
+        <p style={{ color: "var(--text-muted)" }}>
           Download the adapted screenplay, breakdown, bibles, continuity report, and
           image pack as a ZIP.
         </p>
         <a
           href={`/api/jobs/${id}/export`}
-          className="inline-block rounded bg-[#1f5c4d] px-4 py-2 text-sm text-[#f4f7f9]"
+          className="inline-block rounded px-4 py-2 text-sm font-medium"
+          style={{ background: "var(--accent)", color: "#1a1208" }}
         >
           Download production pack ZIP
         </a>
-        <pre className="max-h-[60vh] overflow-auto whitespace-pre-wrap rounded border border-slate-300 bg-[#f4f7f9] p-4 font-mono text-xs">
+        <pre
+          className="max-h-[60vh] overflow-auto whitespace-pre-wrap rounded p-4 font-mono text-xs"
+          style={{
+            background: "var(--surface-panel)",
+            border: "1px solid var(--border-subtle)",
+          }}
+        >
           {report}
         </pre>
       </main>

@@ -12,6 +12,10 @@ export default async function ComparePage({
   const { id } = await params;
   const job = await loadJob(id);
   if (!job) notFound();
+  const panel = {
+    background: "var(--surface-panel)",
+    border: "1px solid var(--border-subtle)",
+  } as const;
 
   return (
     <div>
@@ -19,25 +23,31 @@ export default async function ComparePage({
       <main className="mx-auto max-w-6xl px-4 py-8">
         <h1
           className="text-3xl"
-          style={{ fontFamily: "var(--font-display), serif" }}
+          style={{ fontFamily: "var(--font-display), sans-serif" }}
         >
           Adapted screenplay comparison
         </h1>
-        <p className="mt-1 text-slate-600">
+        <p className="mt-1" style={{ color: "var(--text-muted)" }}>
           Original vs {job.primaryCulture.label}
           {!job.adaptedScreenplay ? " (generate after approval)" : ""}
         </p>
         <div className="mt-6 grid gap-4 md:grid-cols-2">
-          <section className="rounded border border-slate-300 bg-[#f4f7f9]">
-            <h2 className="border-b border-slate-300 px-3 py-2 text-sm font-semibold">
+          <section className="rounded" style={panel}>
+            <h2
+              className="px-3 py-2 text-sm font-semibold"
+              style={{ borderBottom: "1px solid var(--border-subtle)" }}
+            >
               Original
             </h2>
             <pre className="max-h-[70vh] overflow-auto whitespace-pre-wrap p-3 font-mono text-xs leading-relaxed">
               {job.originalText}
             </pre>
           </section>
-          <section className="rounded border border-slate-300 bg-[#f4f7f9]">
-            <h2 className="border-b border-slate-300 px-3 py-2 text-sm font-semibold">
+          <section className="rounded" style={panel}>
+            <h2
+              className="px-3 py-2 text-sm font-semibold"
+              style={{ borderBottom: "1px solid var(--border-subtle)" }}
+            >
               Adapted ({job.primaryCulture.dialect})
             </h2>
             <pre className="max-h-[70vh] overflow-auto whitespace-pre-wrap p-3 font-mono text-xs leading-relaxed">

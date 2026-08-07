@@ -12,6 +12,7 @@
     "sample": "npx tsx scripts/generate-sample.ts"
   },
   "dependencies": {
+    "@tanstack/react-query": "^5.101.4",
     "archiver": "^8.0.0",
     "jszip": "^3.10.1",
     "mammoth": "^1.12.0",
