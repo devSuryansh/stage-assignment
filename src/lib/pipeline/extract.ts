@@ -1,6 +1,8 @@
+import { z } from "zod";
 import type {
   AdaptationPlan,
   Character,
+  CharacterContinuityBeat,
   ContinuitySceneState,
   CostumeVariant,
   ExtractionResult,
@@ -11,6 +13,7 @@ import type {
 } from "../schema";
 import { buildBangruProfile } from "../culture/bangru";
 import { chatJson } from "../ai/client";
+import { parseScreenplay, type ParsedScreenplay } from "../parse/screenplay";
 import {
   detectContinuityIssues,
   ensureIdentityLocks,
@@ -37,391 +40,482 @@ const emptyProduction = (): SceneProduction => ({
   culturalCues: [],
 });
 
-/** Deterministic fallback extractor for the 5-scene jail fixture / offline mode */
-export function heuristicExtract(text: string): ExtractionResult {
-  const sceneBlocks = text.split(/\n(?=(?:EXT\.|INT\.|INT\/EXT\.))/i).filter((b) => b.trim());
-  const characters: Character[] = [
-    {
-      canonicalId: "char_convict",
-      names: ["The Convict", "Convict"],
-      aliases: ["नया वाला", "613"],
-      age: "young adult",
-      role: "protagonist / new prisoner",
-      relationships: ["opposed by Havaldar", "judged by Dagdu", "watched by Ganpat"],
-      personality: ["withdrawn", "careful", "hiding something"],
-      dialect: "neutral (to be adapted)",
-      physicalDescription:
-        "Young Indian man, head often down, half-healed cut over one eye, face partly obscured",
-      grooming: "unkempt intake look; later grey jail uniform",
-      emotionalArc: "silent intake humiliation to barrack exposure",
-      identityLockPrompt:
-        "same young Indian man always, half-healed cut over one eye, head often lowered, lean build, consistent face across shots",
-      important: true,
-    },
-    {
-      canonicalId: "char_havaldar",
-      names: ["Havaldar"],
-      aliases: [],
-      age: "45",
-      role: "jail guard processing intake",
-      relationships: ["dominates Convict", "works with Head Clerk"],
-      personality: ["unhurried", "contemptuous", "performatively loud"],
-      dialect: "neutral",
-      physicalDescription: "Pot-bellied middle-aged guard, thick fingers",
-      grooming: "khaki uniform, sweat-stained",
-      emotionalArc: "bored processor to theatrical bully",
-      identityLockPrompt:
-        "same pot-bellied 45-year-old Indian havaldar, thick fingers, khaki uniform, consistent face",
-      important: true,
-    },
-    {
-      canonicalId: "char_head_clerk",
-      names: ["Head Clerk"],
-      aliases: [],
-      age: "50s",
-      role: "intake clerk",
-      relationships: ["works intake counter"],
-      personality: ["bored", "bureaucratic"],
-      dialect: "neutral",
-      physicalDescription: "Behind counter with ledger and stamp pad",
-      grooming: "faded white shirt",
-      emotionalArc: "flat administrative presence",
-      identityLockPrompt:
-        "same middle-aged Indian clerk behind counter, faded shirt, ledger ink stains, consistent face",
-      important: false,
-    },
-    {
-      canonicalId: "char_dagdu",
-      names: ["Dagdu"],
-      aliases: ["दगडू भाई"],
-      age: "40s",
-      role: "barrack king / antagonist power",
-      relationships: ["commands Trusty", "threatens Convict", "tolerates Ganpat"],
-      personality: ["lazy power", "cruel", "theatrical"],
-      dialect: "neutral",
-      physicalDescription:
-        "40s, shirt open, scar like a zip down one forearm, matchstick in teeth",
-      grooming: "open shirt, raised bedroll with pillow",
-      emotionalArc: "assesses and marks the Convict as untouchable",
-      identityLockPrompt:
-        "same 40s Indian inmate boss, zip-like forearm scar, matchstick in teeth, open shirt, consistent face",
-      important: true,
-    },
-    {
-      canonicalId: "char_ganpat",
-      names: ["Ganpat"],
-      aliases: ["गणपत काका", "Old Man"],
-      age: "60s",
-      role: "elder observer / mercy voice",
-      relationships: ["watched by room", "speaks to Dagdu carefully"],
-      personality: ["spare", "calm", "tired compassion"],
-      dialect: "neutral",
-      physicalDescription: "Spare, white-stubbled old man, cross-legged",
-      grooming: "simple worn clothes",
-      emotionalArc: "quiet conscience in the barrack",
-      identityLockPrompt:
-        "same spare 60s Indian man, white stubble, calm tired eyes, cross-legged, consistent face",
-      important: true,
-    },
-    {
-      canonicalId: "char_trusty",
-      names: ["Trusty"],
-      aliases: [],
-      age: "30s",
-      role: "Dagdu's side man",
-      relationships: ["serves Dagdu"],
-      personality: ["grinning", "messenger of gossip"],
-      dialect: "neutral",
-      physicalDescription: "Inmate beside Dagdu",
-      grooming: "jail clothes, slightly privileged",
-      emotionalArc: "announces Convict's crimes to the room",
-      identityLockPrompt:
-        "same lean Indian trusty inmate beside Dagdu, sly grin, consistent face",
-      important: false,
-    },
-  ];
+const emptyBeat = (characterId: string): CharacterContinuityBeat => ({
+  characterId,
+  wearing: [],
+  carrying: [],
+  knows: [],
+  injuries: [],
+  gained: [],
+  lost: [],
+  notes: "",
+});
 
-  const locations: Location[] = [
-    {
-      canonicalId: "loc_jail_gate",
-      name: "Central Jail Main Gate",
-      aliases: ["CENTRAL JAIL - MAIN GATE"],
-      description: "High bone-coloured wall, broken glass, rusted wire, black iron gate",
-      architectureCues: "watchtower, government seal, prison bus",
-    },
-    {
-      canonicalId: "loc_intake",
-      name: "Jail Intake Room",
-      aliases: ["JAIL - INTAKE ROOM", "INTAKE / STRIP AREA"],
-      description: "Bare room, ceiling fan, long counter, tin partition strip area",
-      architectureCues: "ledger counter, gunny sack, coarse uniforms",
-    },
-    {
-      canonicalId: "loc_corridor",
-      name: "Jail Corridor",
-      aliases: ["JAIL - CORRIDOR"],
-      description: "Long gallery with cell doors and faces at bars",
-      architectureCues: "barred doors, echo, concrete",
-    },
-    {
-      canonicalId: "loc_barrack",
-      name: "Jail Barrack",
-      aliases: ["JAIL - BARRACK"],
-      description: "Long hall, bedrolls, corner latrine, barred window light",
-      architectureCues: "raised bedroll for boss, tin trunk, heat",
-    },
-  ];
+const CharacterSchema = z.object({
+  canonicalId: z.string(),
+  names: z.array(z.string()).default([]),
+  aliases: z.array(z.string()).default([]),
+  age: z.string().default(""),
+  role: z.string().default(""),
+  relationships: z.array(z.string()).default([]),
+  personality: z.array(z.string()).default([]),
+  dialect: z.string().default(""),
+  physicalDescription: z.string().default(""),
+  grooming: z.string().default(""),
+  emotionalArc: z.string().default(""),
+  identityLockPrompt: z.string().default(""),
+  important: z.boolean().default(false),
+});
 
-  const props: Prop[] = [
-    {
-      canonicalId: "prop_placard_613",
-      name: "Number placard 613",
-      aliases: ["placard", "chalk number"],
-      description: "Chalked number board slapped on Convict chest",
-      ownerCharacterId: "char_convict",
-    },
-    {
-      canonicalId: "prop_collar_lump",
-      name: "Collar seam lump",
-      aliases: ["lump", "sewn lump"],
-      description: "Small hard lump sewn into shirt collar, secretly transferred",
-      ownerCharacterId: "char_convict",
-    },
-    {
-      canonicalId: "prop_matchstick",
-      name: "Matchstick",
-      aliases: [],
-      description: "Dagdu works a matchstick between his teeth",
-      ownerCharacterId: "char_dagdu",
-    },
-    {
-      canonicalId: "prop_ledger",
-      name: "Ledger and stamp pad",
-      aliases: ["ledger", "stamp"],
-      description: "Intake paperwork tools",
-      ownerCharacterId: "char_head_clerk",
-    },
-  ];
+const LocationSchema = z.object({
+  canonicalId: z.string(),
+  name: z.string(),
+  aliases: z.array(z.string()).default([]),
+  description: z.string().default(""),
+  architectureCues: z.string().default(""),
+});
 
-  const costumes: CostumeVariant[] = [
-    {
-      canonicalId: "cos_convict_civilian",
-      characterId: "char_convict",
-      label: "Convict civilian intake clothes",
-      garments: ["own shirt", "civilian trousers"],
-      fabrics: ["worn cotton"],
-      colors: ["muted"],
-      footwear: "simple sandals or bare",
-      jewelry: [],
-      headwear: "none",
-      grooming: "cut over eye, head down",
-      sceneNumbers: [1, 2],
-    },
-    {
-      canonicalId: "cos_convict_uniform",
-      characterId: "char_convict",
-      label: "Convict grey jail uniform + 613",
-      garments: ["coarse grey jail shirt", "grey trousers", "number placard 613"],
-      fabrics: ["coarse cotton"],
-      colors: ["grey"],
-      footwear: "jail chappals",
-      jewelry: [],
-      headwear: "none",
-      grooming: "intake buzz/unkempt",
-      sceneNumbers: [3, 4, 5],
-      changeReason: "Forced strip and uniform issue at intake",
-    },
-    {
-      canonicalId: "cos_havaldar_khaki",
-      characterId: "char_havaldar",
-      label: "Havaldar khaki duty kit",
-      garments: ["khaki shirt", "khaki trousers", "belt"],
-      fabrics: ["khaki cotton"],
-      colors: ["khaki"],
-      footwear: "scuffed boots",
-      jewelry: [],
-      headwear: "optional police cap",
-      grooming: "sweaty, pot-bellied",
-      sceneNumbers: [2, 3, 4, 5],
-    },
-    {
-      canonicalId: "cos_dagdu_open_shirt",
-      characterId: "char_dagdu",
-      label: "Dagdu open-shirt barrack boss",
-      garments: ["open shirt", "jail trousers"],
-      fabrics: ["worn cotton"],
-      colors: ["faded"],
-      footwear: "chappals",
-      jewelry: [],
-      headwear: "none",
-      grooming: "matchstick, forearm scar visible",
-      sceneNumbers: [5],
-    },
-    {
-      canonicalId: "cos_ganpat_elder",
-      characterId: "char_ganpat",
-      label: "Ganpat elder inmate",
-      garments: ["worn vest or shirt", "simple trousers"],
-      fabrics: ["thin cotton"],
-      colors: ["dusty white"],
-      footwear: "bare or chappals",
-      jewelry: [],
-      headwear: "none",
-      grooming: "white stubble",
-      sceneNumbers: [5],
-    },
-  ];
+const SceneSkeletonSchema = z.object({
+  number: z.number(),
+  slugline: z.string().default(""),
+  intExt: z.enum(["INT", "EXT", "INT/EXT", "OTHER"]).catch("OTHER"),
+  locationId: z.string().default(""),
+  subLocation: z.string().default(""),
+  time: z.string().default(""),
+  dayDate: z.string().default(""),
+  weather: z.string().default(""),
+  mood: z.string().default(""),
+  summary: z.string().default(""),
+  dramaticPurpose: z.string().default(""),
+  characterIds: z.array(z.string()).default([]),
+  entrances: z.array(z.string()).default([]),
+  exits: z.array(z.string()).default([]),
+});
 
-  const locationFor = (slug: string) => {
-    if (/GATE/i.test(slug)) return "loc_jail_gate";
-    if (/INTAKE|STRIP/i.test(slug)) return "loc_intake";
-    if (/CORRIDOR/i.test(slug)) return "loc_corridor";
-    return "loc_barrack";
+const Pass1Schema = z.object({
+  characters: z.array(CharacterSchema).default([]),
+  locations: z.array(LocationSchema).default([]),
+  scenes: z.array(SceneSkeletonSchema).default([]),
+});
+
+const PropSchema = z.object({
+  canonicalId: z.string(),
+  name: z.string(),
+  aliases: z.array(z.string()).default([]),
+  description: z.string().default(""),
+  ownerCharacterId: z.string().optional(),
+});
+
+const CostumeSchema = z.object({
+  canonicalId: z.string(),
+  characterId: z.string(),
+  label: z.string(),
+  garments: z.array(z.string()).default([]),
+  fabrics: z.array(z.string()).default([]),
+  colors: z.array(z.string()).default([]),
+  footwear: z.string().default(""),
+  jewelry: z.array(z.string()).default([]),
+  headwear: z.string().default(""),
+  grooming: z.string().default(""),
+  sceneNumbers: z.array(z.number()).default([]),
+  changeReason: z.string().optional(),
+});
+
+const BeatSchema = z.object({
+  characterId: z.string(),
+  wearing: z.array(z.string()).default([]),
+  carrying: z.array(z.string()).default([]),
+  knows: z.array(z.string()).default([]),
+  injuries: z.array(z.string()).default([]),
+  gained: z.array(z.string()).default([]),
+  lost: z.array(z.string()).default([]),
+  notes: z.string().default(""),
+});
+
+const Pass2Schema = z.object({
+  production: z
+    .object({
+      set: z.string().default(""),
+      costumes: z.array(z.string()).default([]),
+      grooming: z.array(z.string()).default([]),
+      jewelry: z.array(z.string()).default([]),
+      props: z.array(z.string()).default([]),
+      food: z.array(z.string()).default([]),
+      vehicles: z.array(z.string()).default([]),
+      animals: z.array(z.string()).default([]),
+      extras: z.array(z.string()).default([]),
+      rituals: z.array(z.string()).default([]),
+      gestures: z.array(z.string()).default([]),
+      soundMusic: z.array(z.string()).default([]),
+      culturalCues: z.array(z.string()).default([]),
+    })
+    .default(emptyProduction()),
+  props: z.array(PropSchema).default([]),
+  costumes: z.array(CostumeSchema).default([]),
+  before: z.array(BeatSchema).default([]),
+  after: z.array(BeatSchema).default([]),
+});
+
+function slugify(input: string): string {
+  return input
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_|_$/g, "")
+    .slice(0, 48);
+}
+
+function asRecord(value: unknown): Record<string, unknown> {
+  return value && typeof value === "object" ? (value as Record<string, unknown>) : {};
+}
+
+function asString(value: unknown, fallback = ""): string {
+  return typeof value === "string" ? value : fallback;
+}
+
+function asStringArray(value: unknown): string[] {
+  if (Array.isArray(value)) return value.map((v) => String(v)).filter(Boolean);
+  if (typeof value === "string" && value.trim()) return [value.trim()];
+  return [];
+}
+
+function asNumberArray(value: unknown): number[] {
+  if (!Array.isArray(value)) return [];
+  return value.map((v) => Number(v)).filter((n) => Number.isFinite(n));
+}
+
+/** Coerce common LLM field aliases before zod validation. */
+function normalizePass1Payload(raw: unknown): unknown {
+  const root = asRecord(raw);
+  const characters = (Array.isArray(root.characters) ? root.characters : []).map((item) => {
+    const c = asRecord(item);
+    const name = asString(c.name || c.canonicalName);
+    const names = asStringArray(c.names);
+    if (name && !names.includes(name)) names.unshift(name);
+    const canonicalId =
+      asString(c.canonicalId || c.id || c.characterId) ||
+      (names[0] ? `char_${slugify(names[0])}` : "");
+    return {
+      ...c,
+      canonicalId,
+      names,
+      aliases: asStringArray(c.aliases),
+      age: asString(c.age),
+      role: asString(c.role),
+      relationships: asStringArray(c.relationships),
+      personality: asStringArray(c.personality),
+      dialect: asString(c.dialect),
+      physicalDescription: asString(c.physicalDescription || c.physical_description),
+      grooming: asString(c.grooming),
+      emotionalArc: asString(c.emotionalArc || c.emotional_arc),
+      identityLockPrompt: asString(c.identityLockPrompt || c.identity_lock_prompt),
+      important: Boolean(c.important ?? true),
+    };
+  });
+
+  const locations = (Array.isArray(root.locations) ? root.locations : []).map((item) => {
+    const loc = asRecord(item);
+    const name = asString(loc.name, "Unknown");
+    return {
+      ...loc,
+      canonicalId:
+        asString(loc.canonicalId || loc.id || loc.locationId) || `loc_${slugify(name)}`,
+      name,
+      aliases: asStringArray(loc.aliases),
+      description: asString(loc.description),
+      architectureCues: asString(loc.architectureCues || loc.architecture_cues),
+    };
+  });
+
+  const scenes = (Array.isArray(root.scenes) ? root.scenes : []).map((item) => {
+    const s = asRecord(item);
+    return {
+      ...s,
+      number: Number(s.number) || 0,
+      slugline: asString(s.slugline),
+      intExt: asString(s.intExt || s.int_ext, "OTHER"),
+      locationId: asString(s.locationId || s.location_id || s.location),
+      subLocation: asString(s.subLocation || s.sub_location),
+      time: asString(s.time),
+      dayDate: asString(s.dayDate || s.day_date),
+      weather: asString(s.weather),
+      mood: asString(s.mood),
+      summary: asString(s.summary),
+      dramaticPurpose: asString(s.dramaticPurpose || s.dramatic_purpose),
+      characterIds: asStringArray(s.characterIds || s.character_ids),
+      entrances: asStringArray(s.entrances),
+      exits: asStringArray(s.exits),
+    };
+  });
+
+  return { characters, locations, scenes };
+}
+
+function normalizePass2Payload(raw: unknown): unknown {
+  const root = asRecord(raw);
+  const production = asRecord(root.production);
+
+  const props = (Array.isArray(root.props) ? root.props : []).map((item) => {
+    const p = asRecord(item);
+    const name = asString(p.name, "prop");
+    return {
+      ...p,
+      canonicalId: asString(p.canonicalId || p.id) || `prop_${slugify(name)}`,
+      name,
+      aliases: asStringArray(p.aliases),
+      description: asString(p.description),
+      ownerCharacterId: asString(p.ownerCharacterId || p.owner_character_id) || undefined,
+    };
+  });
+
+  const costumes = (Array.isArray(root.costumes) ? root.costumes : []).map((item) => {
+    const c = asRecord(item);
+    const label = asString(c.label || c.name, "costume");
+    return {
+      ...c,
+      canonicalId: asString(c.canonicalId || c.id) || `cos_${slugify(label)}`,
+      characterId: asString(c.characterId || c.character_id),
+      label,
+      garments: asStringArray(c.garments),
+      fabrics: asStringArray(c.fabrics),
+      colors: asStringArray(c.colors),
+      footwear: asString(c.footwear),
+      jewelry: asStringArray(c.jewelry),
+      headwear: asString(c.headwear),
+      grooming: asString(c.grooming),
+      sceneNumbers: asNumberArray(c.sceneNumbers || c.scene_numbers),
+      changeReason: asString(c.changeReason || c.change_reason) || undefined,
+    };
+  });
+
+  const normalizeBeat = (item: unknown) => {
+    const b = asRecord(item);
+    return {
+      characterId: asString(b.characterId || b.character_id),
+      wearing: asStringArray(b.wearing),
+      carrying: asStringArray(b.carrying),
+      knows: asStringArray(b.knows),
+      injuries: asStringArray(b.injuries),
+      gained: asStringArray(b.gained),
+      lost: asStringArray(b.lost),
+      notes: asString(b.notes),
+    };
   };
 
-  const scenes: Scene[] = sceneBlocks.slice(0, 5).map((block, idx) => {
-    const firstLine = block.trim().split("\n")[0] || `SCENE ${idx + 1}`;
-    const number = idx + 1;
-    const intExt = /^EXT/i.test(firstLine)
-      ? "EXT"
-      : /^INT\/EXT/i.test(firstLine)
-        ? "INT/EXT"
-        : "INT";
-    const characterIds = characters
-      .filter((c) =>
-        c.names.some((n) => new RegExp(n.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i").test(block)),
-      )
-      .map((c) => c.canonicalId);
+  return {
+    production: {
+      set: asString(production.set),
+      costumes: asStringArray(production.costumes),
+      grooming: asStringArray(production.grooming),
+      jewelry: asStringArray(production.jewelry),
+      props: asStringArray(production.props),
+      food: asStringArray(production.food),
+      vehicles: asStringArray(production.vehicles),
+      animals: asStringArray(production.animals),
+      extras: asStringArray(production.extras),
+      rituals: asStringArray(production.rituals),
+      gestures: asStringArray(production.gestures),
+      soundMusic: asStringArray(production.soundMusic || production.sound_music),
+      culturalCues: asStringArray(production.culturalCues || production.cultural_cues),
+    },
+    props,
+    costumes,
+    before: (Array.isArray(root.before) ? root.before : []).map(normalizeBeat),
+    after: (Array.isArray(root.after) ? root.after : []).map(normalizeBeat),
+  };
+}
 
+/**
+ * Offline / parser-only extraction. Structure comes from format conventions
+ * alone — no story-specific fixtures.
+ */
+export function parserExtract(text: string): ExtractionResult {
+  const parsed = parseScreenplay(text);
+  return buildFromParsed(parsed);
+}
+
+function buildFromParsed(parsed: ParsedScreenplay): ExtractionResult {
+  const characters: Character[] = parsed.characterCues.map((name) => ({
+    canonicalId: `char_${slugify(name)}`,
+    names: [name],
+    aliases: [],
+    age: "",
+    role: "speaking role",
+    relationships: [],
+    personality: [],
+    dialect: "",
+    physicalDescription: "",
+    grooming: "",
+    emotionalArc: "",
+    identityLockPrompt: `same person always: ${name}, consistent face and body across all shots`,
+    important: true,
+  }));
+
+  const locMap = new Map<string, Location>();
+  for (const scene of parsed.scenes) {
+    const key = slugify(scene.locationName || scene.slugline || `scene_${scene.number}`);
+    if (!locMap.has(key)) {
+      locMap.set(key, {
+        canonicalId: `loc_${key}`,
+        name: scene.locationName || scene.slugline,
+        aliases: [scene.slugline],
+        description: "",
+        architectureCues: "",
+      });
+    }
+  }
+  const locations = [...locMap.values()];
+
+  const nameToId = new Map(
+    characters.flatMap((c) => c.names.map((n) => [n.toUpperCase(), c.canonicalId] as const)),
+  );
+
+  const scenes: Scene[] = parsed.scenes.map((scene) => {
+    const locKey = slugify(scene.locationName || scene.slugline || `scene_${scene.number}`);
+    const characterIds = scene.characterCues
+      .map((cue) => nameToId.get(cue.toUpperCase()))
+      .filter((id): id is string => Boolean(id));
     return {
-      number,
-      slugline: firstLine.trim(),
-      intExt: intExt as Scene["intExt"],
-      locationId: locationFor(firstLine),
-      subLocation: "",
-      time: /NIGHT/i.test(firstLine)
-        ? "NIGHT"
-        : /MORNING/i.test(firstLine)
-          ? "MORNING"
-          : "DAY",
-      dayDate: "Day One",
-      weather: "hot",
-      mood: number === 1 ? "ominous arrival" : number === 5 ? "predatory silence" : "procedural dread",
-      summary: block.slice(0, 280).replace(/\s+/g, " ").trim(),
-      dramaticPurpose:
-        number === 1
-          ? "Establish jail world"
-          : number === 3
-            ? "Secret prop transfer"
-            : number === 5
-              ? "Introduce hierarchy and threat"
-              : "Advance intake humiliation",
-      characterIds: characterIds.length
-        ? characterIds
-        : number === 1
-          ? ["char_convict"]
-          : ["char_convict", "char_havaldar"],
-      entrances: number === 5 ? ["char_convict"] : [],
-      exits: number === 4 ? ["char_convict"] : [],
+      number: scene.number,
+      slugline: scene.slugline,
+      intExt: scene.intExt,
+      locationId: `loc_${locKey}`,
+      subLocation: scene.subLocation,
+      time: scene.time,
+      dayDate: "",
+      weather: "",
+      mood: "",
+      summary: scene.action.slice(0, 280).replace(/\s+/g, " ").trim(),
+      dramaticPurpose: "",
+      characterIds,
+      entrances: [],
+      exits: [],
       production: {
         ...emptyProduction(),
-        set: firstLine.trim(),
-        props:
-          number === 3
-            ? ["collar lump", "gunny sack", "grey uniform"]
-            : number === 2
-              ? ["ledger", "stamp pad", "placard"]
-              : number === 5
-                ? ["matchstick", "tin trunk", "bedrolls"]
-                : [],
-        gestures:
-          number === 2
-            ? ["palm shove", "eyes on floor"]
-            : number === 5
-              ? ["matchstick roll", "room goes quiet"]
-              : [],
-        culturalCues: ["North Indian jail hierarchy (to be culturally remapped)"],
+        set: scene.slugline,
       },
     };
   });
 
-  const continuity: ContinuitySceneState[] = scenes.map((scene) => {
-    const convictAfterCarrying =
-      scene.number >= 3
-        ? scene.number === 3
-          ? ["hidden collar lump (on body)", "grey uniform"]
-          : ["hidden collar lump (on body)", "number placard 613", "grey uniform"]
-        : ["civilian clothes", "collar lump sewn in shirt"];
+  const continuity: ContinuitySceneState[] = scenes.map((scene) => ({
+    sceneNumber: scene.number,
+    before: scene.characterIds.map((id) => emptyBeat(id)),
+    after: scene.characterIds.map((id) => emptyBeat(id)),
+  }));
 
-    return {
-      sceneNumber: scene.number,
-      before: [
-        {
-          characterId: "char_convict",
-          wearing:
-            scene.number >= 3 ? ["grey jail uniform"] : ["civilian intake clothes"],
-          carrying:
-            scene.number >= 3
-              ? scene.number > 3
-                ? ["613 placard", "hidden lump"]
-                : ["hidden lump being transferred"]
-              : ["own shirt with sewn lump"],
-          knows: scene.number >= 2 ? ["charges being announced"] : [],
-          injuries: ["half-healed cut over eye"],
-          gained: [],
-          lost: [],
-          notes: "",
-        },
-      ],
-      after: [
-        {
-          characterId: "char_convict",
-          wearing:
-            scene.number >= 3 ? ["grey jail uniform", "613 placard"] : ["civilian clothes"],
-          carrying: convictAfterCarrying,
-          knows:
-            scene.number >= 5
-              ? ["barrack hierarchy", "Dagdu's judgment"]
-              : scene.number >= 2
-                ? ["he is being marked"]
-                : [],
-          injuries: ["half-healed cut over eye"],
-          gained:
-            scene.number === 2
-              ? ["number identity 613"]
-              : scene.number === 3
-                ? ["lump relocated on body"]
-                : [],
-          lost: scene.number === 3 ? ["civilian shirt"] : [],
-          notes:
-            scene.number === 3
-              ? "Critical continuity: lump moves from collar to body before uniform on"
-              : "",
-        },
-      ],
-    };
-  });
-
-  const issues = detectContinuityIssues(characters, costumes, scenes, continuity);
-
+  const charactersLocked = ensureIdentityLocks(characters);
   return {
-    characters: ensureIdentityLocks(characters),
+    characters: charactersLocked,
     locations,
-    props,
-    costumes,
+    props: [],
+    costumes: [],
     scenes,
     continuity,
-    issues,
+    issues: detectContinuityIssues(charactersLocked, [], scenes, continuity),
   };
 }
 
-interface LlmExtractionPayload {
-  characters?: Character[];
-  locations?: Location[];
-  props?: Prop[];
-  costumes?: CostumeVariant[];
-  scenes?: Scene[];
-  continuity?: ContinuitySceneState[];
+function fillMissingAfterStates(
+  characters: Character[],
+  scenes: Scene[],
+  continuity: ContinuitySceneState[],
+): ContinuitySceneState[] {
+  return scenes.map((scene) => {
+    const existing = continuity.find((c) => c.sceneNumber === scene.number) || {
+      sceneNumber: scene.number,
+      before: [],
+      after: [],
+    };
+    const after = [...existing.after];
+    const before = [...existing.before];
+    for (const cid of scene.characterIds) {
+      const char = characters.find((c) => c.canonicalId === cid);
+      if (!char?.important) continue;
+      if (!after.some((b) => b.characterId === cid)) {
+        const prev = before.find((b) => b.characterId === cid);
+        after.push(prev ? { ...prev, gained: [], lost: [], notes: prev.notes || "" } : emptyBeat(cid));
+      }
+      if (!before.some((b) => b.characterId === cid)) {
+        before.push(emptyBeat(cid));
+      }
+    }
+    return { sceneNumber: scene.number, before, after };
+  });
+}
+
+async function llmPass1(opts: {
+  text: string;
+  parsed: ParsedScreenplay;
+  usageLogPath: string;
+}): Promise<z.infer<typeof Pass1Schema>> {
+  const skeleton = opts.parsed.scenes.map((s) => ({
+    number: s.number,
+    slugline: s.slugline,
+    intExt: s.intExt,
+    locationName: s.locationName,
+    subLocation: s.subLocation,
+    time: s.time,
+    characterCues: s.characterCues,
+  }));
+
+  const raw = await chatJson<unknown>({
+    purpose: "extract_pass1_skeleton",
+    usageLogPath: opts.usageLogPath,
+    temperature: 0.15,
+    system: `You extract a global screenplay skeleton for production breakdown.
+Return JSON: { characters, locations, scenes }.
+Each character MUST include: canonicalId (char_*), names (array), aliases, age, role, physicalDescription, identityLockPrompt, important.
+Each location MUST include: canonicalId (loc_*), name, aliases, description, architectureCues.
+Each scene MUST include: number, slugline, intExt, locationId, time, mood, summary, dramaticPurpose, characterIds, entrances, exits.
+Merge aliases into one canonical character. Keep provided scene numbers/sluglines.
+identityLockPrompt must be a reusable visual lock (face, age, scars, build).
+Mark speaking leads important:true.`,
+    user: `PARSER SKELETON (ground truth for scene cuts / cues):
+${JSON.stringify(skeleton, null, 2)}
+
+FULL SCREENPLAY:
+${opts.text.slice(0, 45000)}`,
+  });
+
+  return Pass1Schema.parse(normalizePass1Payload(raw));
+}
+
+async function llmPass2Scene(opts: {
+  text: string;
+  sceneNumber: number;
+  sceneRaw: string;
+  characters: Character[];
+  previousAfter?: CharacterContinuityBeat[];
+  usageLogPath: string;
+}): Promise<z.infer<typeof Pass2Schema>> {
+  const raw = await chatJson<unknown>({
+    purpose: `extract_pass2_scene_${opts.sceneNumber}`,
+    usageLogPath: opts.usageLogPath,
+    temperature: 0.2,
+    system: `You extract production detail and continuity deltas for ONE scene.
+Return JSON: { production, props, costumes, before, after }.
+before/after arrays need beats for every important character present.
+Use the same characterIds provided. Prop/costume ids: prop_*, cos_*.
+If a costume changes from prior scenes, set changeReason.
+Carry forward items from previous after-state unless explicitly lost.`,
+    user: `CANONICAL CHARACTERS:
+${JSON.stringify(
+  opts.characters.map((c) => ({
+    id: c.canonicalId,
+    names: c.names,
+    important: c.important,
+  })),
+  null,
+  2,
+)}
+
+PREVIOUS SCENE AFTER-STATE:
+${JSON.stringify(opts.previousAfter || [], null, 2)}
+
+SCENE ${opts.sceneNumber} TEXT:
+${opts.sceneRaw.slice(0, 12000)}`,
+  });
+
+  return Pass2Schema.parse(normalizePass2Payload(raw));
 }
 
 export async function extractScreenplay(opts: {
@@ -430,35 +524,134 @@ export async function extractScreenplay(opts: {
   culture: CultureSelection;
   useHeuristicFallback?: boolean;
 }): Promise<ExtractionResult> {
-  const profile = buildBangruProfile(opts.culture.setting);
+  const parsed = parseScreenplay(opts.text);
 
-  let payload: LlmExtractionPayload | null = null;
   try {
-    payload = await chatJson<LlmExtractionPayload>({
-      purpose: "extract_screenplay",
+    const pass1 = await llmPass1({
+      text: opts.text,
+      parsed,
       usageLogPath: opts.usageLogPath,
-      system: `You extract production breakdowns from screenplays.
-Return JSON with keys: characters, locations, props, costumes, scenes, continuity.
-Merge aliases into canonical characters. Use stable canonicalId strings like char_*, loc_*, prop_*, cos_*.
-Scenes need: number, slugline, intExt, locationId, time, mood, summary, dramaticPurpose, characterIds, entrances, exits, production.
-Continuity is an array of {sceneNumber, before[], after[]} with wearing/carrying/knows/injuries/gained/lost/notes.
-Flag nothing yet; just extract. Identity lock prompts must be detailed and reusable for image consistency.`,
-      user: `Target culture context (for later adaptation notes only; extract faithfully first):
-${JSON.stringify(profile, null, 2)}
-
-SCREENPLAY:
-${opts.text.slice(0, 40000)}`,
-      temperature: 0.2,
     });
+
+    const characters = ensureIdentityLocks(mergeCharacters(pass1.characters as Character[]));
+    let locations = mergeLocations(pass1.locations as Location[]);
+
+    // Prefer parser scene count/order when LLM drifts.
+    const sceneShells: Scene[] = parsed.scenes.map((ps) => {
+      const llm = pass1.scenes.find((s) => s.number === ps.number);
+      const locationId =
+        llm?.locationId ||
+        locations.find((l) =>
+          [l.name, ...l.aliases].some((n) =>
+            n.toLowerCase().includes(ps.locationName.toLowerCase()),
+          ),
+        )?.canonicalId ||
+        `loc_${slugify(ps.locationName || `scene_${ps.number}`)}`;
+
+      if (!locations.some((l) => l.canonicalId === locationId)) {
+        locations = mergeLocations([
+          ...locations,
+          {
+            canonicalId: locationId,
+            name: ps.locationName || ps.slugline,
+            aliases: [ps.slugline],
+            description: "",
+            architectureCues: "",
+          },
+        ]);
+      }
+
+      const cueIds = ps.characterCues
+        .map((cue) => {
+          const upper = cue.toUpperCase();
+          return characters.find((c) =>
+            [...c.names, ...c.aliases].some((n) => n.toUpperCase() === upper),
+          )?.canonicalId;
+        })
+        .filter((id): id is string => Boolean(id));
+
+      return {
+        number: ps.number,
+        slugline: ps.slugline,
+        intExt: (llm?.intExt || ps.intExt) as Scene["intExt"],
+        locationId,
+        subLocation: llm?.subLocation || ps.subLocation,
+        time: llm?.time || ps.time,
+        dayDate: llm?.dayDate || "",
+        weather: llm?.weather || "",
+        mood: llm?.mood || "",
+        summary: llm?.summary || ps.action.slice(0, 280).replace(/\s+/g, " ").trim(),
+        dramaticPurpose: llm?.dramaticPurpose || "",
+        characterIds: [...new Set([...(llm?.characterIds || []), ...cueIds])],
+        entrances: llm?.entrances || [],
+        exits: llm?.exits || [],
+        production: emptyProduction(),
+      };
+    });
+
+    const props: Prop[] = [];
+    const costumes: CostumeVariant[] = [];
+    const continuity: ContinuitySceneState[] = [];
+    let previousAfter: CharacterContinuityBeat[] = [];
+
+    for (const shell of sceneShells) {
+      const parsedScene = parsed.scenes.find((s) => s.number === shell.number);
+      const detail = await llmPass2Scene({
+        text: opts.text,
+        sceneNumber: shell.number,
+        sceneRaw: parsedScene?.rawText || shell.slugline,
+        characters,
+        previousAfter,
+        usageLogPath: opts.usageLogPath,
+      });
+
+      shell.production = { ...emptyProduction(), ...detail.production };
+      props.push(...(detail.props as Prop[]));
+      costumes.push(
+        ...(detail.costumes.map((c) => ({
+          ...c,
+          sceneNumbers: c.sceneNumbers.length ? c.sceneNumbers : [shell.number],
+        })) as CostumeVariant[]),
+      );
+
+      const state: ContinuitySceneState = {
+        sceneNumber: shell.number,
+        before: detail.before as CharacterContinuityBeat[],
+        after: detail.after as CharacterContinuityBeat[],
+      };
+      continuity.push(state);
+      previousAfter = state.after;
+    }
+
+    const mergedProps = mergeProps(props);
+    const mergedCostumes = mergeCostumes(costumes);
+    const filledContinuity = fillMissingAfterStates(characters, sceneShells, continuity);
+
+    const result: ExtractionResult = {
+      characters,
+      locations,
+      props: mergedProps,
+      costumes: mergedCostumes,
+      scenes: sceneShells,
+      continuity: filledContinuity,
+      issues: detectContinuityIssues(
+        characters,
+        mergedCostumes,
+        sceneShells,
+        filledContinuity,
+      ),
+    };
+    result.adaptationPlan = buildAdaptationPlan(result, opts.culture);
+    return result;
   } catch (err) {
     if (opts.useHeuristicFallback === false) throw err;
-    const fallback = heuristicExtract(opts.text);
+    const fallback = parserExtract(opts.text);
     fallback.issues = [
       ...fallback.issues,
       {
         id: "llm_extract_fallback",
         severity: "warning",
-        message: `LLM extraction failed; used heuristic fallback (${err instanceof Error ? err.message : String(err)})`,
+        message: `LLM extraction failed; used generic parser fallback (${err instanceof Error ? err.message : String(err)})`,
         sceneNumbers: [],
         entityIds: [],
       },
@@ -466,45 +659,6 @@ ${opts.text.slice(0, 40000)}`,
     fallback.adaptationPlan = buildAdaptationPlan(fallback, opts.culture);
     return fallback;
   }
-
-  const characters = ensureIdentityLocks(mergeCharacters(payload.characters || []));
-  const locations = mergeLocations(payload.locations || []);
-  const props = mergeProps(payload.props || []);
-  const costumes = mergeCostumes(payload.costumes || []);
-  const scenes = payload.scenes || [];
-  const continuity = payload.continuity || [];
-
-  // If LLM returned too little, blend with heuristic for the known fixture.
-  const enriched =
-    characters.length < 3 || scenes.length < 2
-      ? heuristicExtract(opts.text)
-      : {
-          characters,
-          locations,
-          props,
-          costumes,
-          scenes,
-          continuity,
-          issues: [] as ExtractionResult["issues"],
-        };
-
-  if (characters.length >= 3 && scenes.length >= 2) {
-    enriched.characters = characters;
-    enriched.locations = locations.length ? locations : enriched.locations;
-    enriched.props = props.length ? props : enriched.props;
-    enriched.costumes = costumes.length ? costumes : enriched.costumes;
-    enriched.scenes = scenes;
-    enriched.continuity = continuity.length ? continuity : enriched.continuity;
-  }
-
-  enriched.issues = detectContinuityIssues(
-    enriched.characters,
-    enriched.costumes,
-    enriched.scenes,
-    enriched.continuity,
-  );
-  enriched.adaptationPlan = buildAdaptationPlan(enriched, opts.culture);
-  return enriched;
 }
 
 export function buildAdaptationPlan(
@@ -530,7 +684,7 @@ export function buildAdaptationPlan(
       personalityShift: "Preserve core traits; express through local social codes",
       wardrobeShift: profile.wardrobe.slice(0, 2).join("; "),
     })),
-    settingRemap: `Remap locations into ${culture.region} ${culture.setting} jail/community visual language: ${profile.architecture.slice(0, 2).join("; ")}`,
+    settingRemap: `Remap locations into ${culture.region} ${culture.setting} visual language: ${profile.architecture.slice(0, 2).join("; ")}`,
     costumePlanSummary: extraction.costumes
       .map((c) => `${c.canonicalId}: ${c.label} (scenes ${c.sceneNumbers.join(",")})`)
       .join(" | "),

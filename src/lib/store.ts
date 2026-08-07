@@ -4,10 +4,15 @@ import { randomUUID } from "crypto";
 import type { CultureSelection, Job, JobStatus } from "./schema";
 import { BANGRU_DEFAULT } from "./schema";
 
-const ROOT = path.join(process.cwd(), "data", "jobs");
+function dataRoot() {
+  const base = process.env.DATA_DIR || "data";
+  return path.isAbsolute(base)
+    ? path.join(base, "jobs")
+    : path.join(process.cwd(), base, "jobs");
+}
 
 export function jobDir(id: string) {
-  return path.join(ROOT, id);
+  return path.join(dataRoot(), id);
 }
 
 export function jobJsonPath(id: string) {
@@ -77,8 +82,9 @@ export async function updateJobStatus(
 
 export async function listJobs(): Promise<Job[]> {
   try {
-    await fs.mkdir(ROOT, { recursive: true });
-    const entries = await fs.readdir(ROOT);
+    const root = dataRoot();
+    await fs.mkdir(root, { recursive: true });
+    const entries = await fs.readdir(root);
     const jobs: Job[] = [];
     for (const entry of entries) {
       const job = await loadJob(entry);

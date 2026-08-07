@@ -15,7 +15,14 @@ function Asset({
 }) {
   if (!rel) {
     return (
-      <div className="flex aspect-square items-center justify-center rounded border border-dashed border-slate-400 bg-slate-100 text-xs text-slate-500">
+      <div
+        className="flex aspect-square items-center justify-center text-xs"
+        style={{
+          border: "1px dashed var(--border-subtle)",
+          background: "var(--surface-raised)",
+          color: "var(--text-faint)",
+        }}
+      >
         Pending
       </div>
     );
@@ -25,7 +32,8 @@ function Asset({
     <img
       src={`/api/jobs/${jobId}/assets/${rel}`}
       alt={alt}
-      className="aspect-square w-full rounded border border-slate-300 object-cover"
+      className="aspect-square w-full object-cover"
+      style={{ border: "1px solid var(--border-subtle)" }}
     />
   );
 }
@@ -47,17 +55,20 @@ export default async function GalleryPage({
         <div>
           <h1
             className="text-3xl"
-            style={{ fontFamily: "var(--font-display), serif" }}
+            style={{ fontFamily: "var(--font-display), sans-serif" }}
           >
             Visual gallery
           </h1>
-          <p className="mt-1 text-slate-600">
-            Character bible, unique costumes, and one keyframe per scene.
+          <p className="mt-1" style={{ color: "var(--text-muted)" }}>
+            Character bible first, then costumes and scene keyframes conditioned on that
+            reference image.
           </p>
         </div>
 
         <section>
-          <h2 className="text-xl font-semibold">Characters</h2>
+          <h2 className="text-xl font-semibold" style={{ fontFamily: "var(--font-display), sans-serif" }}>
+            Characters
+          </h2>
           <div className="mt-3 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {extraction.characters
               .filter((c) => c.important)
@@ -71,7 +82,7 @@ export default async function GalleryPage({
                   <figcaption className="text-sm">
                     <span className="font-medium">{c.names[0]}</span>
                     <br />
-                    <span className="text-slate-500">{c.role}</span>
+                    <span style={{ color: "var(--text-faint)" }}>{c.role}</span>
                   </figcaption>
                 </figure>
               ))}
@@ -79,7 +90,9 @@ export default async function GalleryPage({
         </section>
 
         <section>
-          <h2 className="text-xl font-semibold">Costumes</h2>
+          <h2 className="text-xl font-semibold" style={{ fontFamily: "var(--font-display), sans-serif" }}>
+            Costumes
+          </h2>
           <div className="mt-3 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {extraction.costumes.map((c) => (
               <figure key={c.canonicalId} className="space-y-2">
@@ -91,7 +104,7 @@ export default async function GalleryPage({
                 <figcaption className="text-sm">
                   <span className="font-medium">{c.label}</span>
                   <br />
-                  <span className="text-slate-500">
+                  <span style={{ color: "var(--text-faint)" }}>
                     scenes {c.sceneNumbers.join(", ")}
                   </span>
                 </figcaption>
@@ -101,7 +114,9 @@ export default async function GalleryPage({
         </section>
 
         <section>
-          <h2 className="text-xl font-semibold">Scenes</h2>
+          <h2 className="text-xl font-semibold" style={{ fontFamily: "var(--font-display), sans-serif" }}>
+            Scenes
+          </h2>
           <div className="mt-3 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {extraction.scenes.map((s) => (
               <figure key={s.number} className="space-y-2">
@@ -113,7 +128,7 @@ export default async function GalleryPage({
                 <figcaption className="text-sm">
                   <span className="font-medium">Scene {s.number}</span>
                   <br />
-                  <span className="text-slate-500">{s.slugline}</span>
+                  <span style={{ color: "var(--text-faint)" }}>{s.slugline}</span>
                 </figcaption>
               </figure>
             ))}

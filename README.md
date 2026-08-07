@@ -1,74 +1,78 @@
-# Cultural Screenplay & Visual Adaptation Studio
+# Cultural Adaptation Studio
 
-48-hour MVP: adapt a short screenplay into **Bangru Haryanvi** with strict continuity, then generate a character / costume / scene visual pack using **free** OpenAI-compatible inference via [FreeLLMAPI](https://github.com/tashfeenahmed/freellmapi).
+A production-pack module for an AI-native film pipeline: adapt a short screenplay into **Bangru Haryanvi**, keep continuity strict, then generate a character / costume / scene visual pack — only after human approval.
+
+Built as a STAGE Studio–shaped Next.js App Router app (TanStack Query status polling, Inter/Poppins, dark neutral surface).
 
 ## What it does
 
 1. Upload or paste a screenplay (TXT / DOCX / PDF), or load the bundled 5-scene jail fixture.
 2. Select Bangru Haryanvi (Haryana) + rural/urban setting.
-3. Extract scenes, canonical characters/locations/props/costumes, and continuity.
+3. **Parse** structure from format alone, then **two LLM passes**: global skeleton + per-scene production/continuity.
 4. Review continuity issues and approve the adaptation + costume plan.
-5. Generate adapted screenplay + visual pack.
+5. **Adapt scene-by-scene** with a Bangru culture-lock card; generate visuals with **reference-image identity lock**.
 6. Export ZIP: screenplay, breakdown, bibles, continuity report, images, AI usage log.
 
-## Prerequisites
+## Architecture
 
-- Node.js 20+
-- FreeLLMAPI running locally (recommended)
-
-### Start FreeLLMAPI
-
-```bash
-curl -fsSL https://freellmapi.co/install.sh | bash
-# open http://localhost:3001 — add free provider keys — copy unified API key
+```
+upload → format parser → LLM pass 1 (characters/scenes)
+                       → LLM pass 2 per scene (production + continuity)
+                       → merge / continuity check → approval gate
+                       → scene-by-scene Bangru adapt
+                       → character bible image → costume + scene images (ref-conditioned)
+                       → export ZIP
 ```
 
-Or Docker Compose from the FreeLLMAPI repo. Point this app at `http://localhost:3001/v1`.
+- **Chat:** FreeLLMAPI (`gemini-3.5-flash`), with optional direct Gemini OpenAI-compatible fallback.
+- **Images:** Pollinations `nanobanana` (keyed) with `/v1/images/edits` reference conditioning; keyless `flux` + browser User-Agent as last resort.
+- **Offline fallback:** generic screenplay parser only — no hardcoded fixture answers.
 
 ## Setup
 
 ```bash
 cp .env.example .env
-# edit FREELLMAPI_API_KEY
+# FREELLMAPI_API_KEY, FREELLMAPI_CHAT_MODEL=gemini-3.5-flash
+# POLLINATIONS_API_KEY
+# optional: GOOGLE_API_KEY for chat fallback
+# on Vercel: DATA_DIR=/tmp/data
 
 npm install
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000).
+### FreeLLMAPI (recommended chat router)
 
-Without FreeLLMAPI, extraction/adaptation still run via heuristic fallback; images attempt Pollinations fallback.
+```bash
+curl -fsSL https://freellmapi.co/install.sh | bash
+# open http://localhost:3001 — add provider keys — copy unified API key
+```
+
+Point `FREELLMAPI_BASE_URL` at `http://localhost:3001/v1`.
 
 ## Scripts
 
 | Command | Purpose |
-|---------|---------|
-| `npm run dev` | Next.js dev server |
-| `npm run build` / `npm start` | Production |
-| `npm test` | Unit tests (dedupe, continuity, fixture extract) |
-| `npm run sample` | Build sample Bangru pack under `samples/bangru/` |
+|---|---|
+| `npm run dev` | Local Next.js app |
+| `npm test` | Vitest (parser, continuity, costume dedupe, approval gate) |
+| `npm run sample` | Live end-to-end regeneration of `samples/bangru/` |
 
-## Demo checklist (3–5 minutes)
+## Design decisions
 
-1. Home → **Use 5-scene jail fixture (Bangru)**.
-2. Extract page: show 5 scenes, merged characters (Convict/Havaldar/Dagdu/Ganpat), continuity notes on collar lump.
-3. Approve: culture plan + unique costumes → **Approve & generate**.
-4. Compare: original vs Bangru dialogue/action.
-5. Gallery: character bible, costumes once each, scene keyframes.
-6. Export: download ZIP; open continuity report.
+- **Two extraction passes** for output depth, not input truncation — per-scene prompts yield richer production detail.
+- **Identity lock is a reference image**, not a prompt adjective. Character bible first; costumes and keyframes condition on that PNG.
+- **Approval gate is server-enforced** (`status === awaiting_approval` + `approved: true`).
+- **Prop continuity uses token overlap** after normalizing parentheticals/stopwords, so paraphrases do not spam false warnings.
+- **Multi-culture checkbox removed** rather than shipping a half-feature (`job.cultures` was written and never read). See LIMITATIONS.md.
 
-## Acceptance fixture
+## Demo talking points
 
-`fixtures/sample-5scenes.txt` — first five scenes from `12Vini_Prem_Screenplay_Sample.pdf` (gate → barrack).
+- How face consistency works: reference-image conditioning via Pollinations edits.
+- Broken JSON: `response_format: json_object` + zod + repair pass.
+- Alias merge: name/alias cross-match into one canonical id.
+- Weakest parts (own them): dialect authenticity unverified by a native speaker; continuity is heuristic, not semantic.
 
-## Sample outputs
+## License
 
-See `samples/bangru/` for adapted screenplay, breakdown, continuity report, and usage log from a local run.
-
-## AI usage log
-
-Each FreeLLMAPI / fallback call appends one JSON line to `data/jobs/<id>/ai-usage-log.jsonl` with purpose, model, latency, and success/error.
-
-## License / notes
-
-Assignment deliverable for personal evaluation. FreeLLMAPI is for personal experimentation; respect each upstream provider's free-tier terms.
+Assignment submission — see repository owner for distribution.

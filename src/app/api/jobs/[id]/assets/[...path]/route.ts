@@ -15,11 +15,13 @@ export async function GET(
   if (!job) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   const rel = parts.join("/");
-  if (rel.includes("..")) {
+  const imagesRoot = path.resolve(jobDir(id), "images");
+  const abs = path.resolve(jobDir(id), rel);
+
+  if (!abs.startsWith(imagesRoot + path.sep) && abs !== imagesRoot) {
     return NextResponse.json({ error: "Invalid path" }, { status: 400 });
   }
 
-  const abs = path.join(jobDir(id), rel);
   try {
     const buf = await fs.readFile(abs);
     const ext = path.extname(abs).toLowerCase();
@@ -28,7 +30,9 @@ export async function GET(
         ? "image/png"
         : ext === ".jpg" || ext === ".jpeg"
           ? "image/jpeg"
-          : "application/octet-stream";
+          : ext === ".webp"
+            ? "image/webp"
+            : "application/octet-stream";
     return new NextResponse(buf, {
       headers: { "Content-Type": type, "Cache-Control": "no-store" },
     });

@@ -1,22 +1,23 @@
-import { Newsreader, DM_Sans } from "next/font/google";
+import { Inter, Poppins } from "next/font/google";
+import { Providers } from "@/components/Providers";
 import "./globals.css";
 
-const display = Newsreader({
-  variable: "--font-display",
-  subsets: ["latin"],
-  weight: ["600", "700"],
-});
-
-const body = DM_Sans({
+const inter = Inter({
   variable: "--font-body",
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
 });
 
+const poppins = Poppins({
+  variable: "--font-display",
+  subsets: ["latin"],
+  weight: ["500", "600", "700"],
+});
+
 export const metadata = {
   title: "Cultural Adaptation Studio",
   description:
-    "Adapt screenplays into Bangru Haryanvi and generate a continuity-safe visual production pack",
+    "Production-pack module: adapt a screenplay into Bangru Haryanvi with continuity-safe visuals",
 };
 
 export default function RootLayout({
@@ -25,10 +26,14 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${display.variable} ${body.variable} min-h-screen bg-[#e8eef2] text-slate-900 antialiased`}
-        style={{ fontFamily: "var(--font-body), sans-serif" }}
+        className={`${inter.variable} ${poppins.variable} min-h-screen bg-surface-base text-neutral-100 antialiased`}
+        style={{
+          fontFamily: "var(--font-body), sans-serif",
+          background: "var(--surface-base)",
+          color: "var(--text-primary)",
+        }}
       >
-        {children}
+        <Providers>{children}</Providers>
       </body>
     </html>
   );
