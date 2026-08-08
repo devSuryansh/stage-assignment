@@ -52,8 +52,17 @@ npm run dev
 
 1. Push the repo and import it in [Vercel](https://vercel.com/new).
 2. Set `GROQ_API_KEY` (Production + Preview). Optional: `HF_TOKEN` / `HF_IMAGES`.
-3. Deploy. API routes under `/api/jobs/**` run with `maxDuration: 300`.
-4. Bundled `samples/bangru/` is the durable showcase when serverless storage is wiped.
+3. **Create a Blob store** so jobs survive across serverless instances (`/tmp` is not shared):
+
+```bash
+npx vercel blob create-store stage-assignment-data --access private --yes \
+  --environment production --environment preview --environment development
+```
+
+That injects `BLOB_READ_WRITE_TOKEN`. Without it, create-job works then `/jobs/.../extract` 404s.
+
+4. Deploy. API routes under `/api/jobs/**` run with `maxDuration: 300`.
+5. Bundled `samples/bangru/` is the durable showcase pack in the repo.
 
 ```bash
 npx vercel env add GROQ_API_KEY

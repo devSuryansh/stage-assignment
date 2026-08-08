@@ -2,6 +2,7 @@ import { promises as fs } from "fs";
 import path from "path";
 import { InferenceClient } from "@huggingface/inference";
 import { appendUsage } from "./usage";
+import { jobDir, syncLocalFileToBlob } from "../fs-store";
 
 /**
  * Free-first images:
@@ -48,6 +49,22 @@ export function imageEditModel() {
 async function writeImageBuffer(outPath: string, buf: Buffer) {
   await fs.mkdir(path.dirname(outPath), { recursive: true });
   await fs.writeFile(outPath, buf);
+  // Keep images durable across Vercel instances when Blob is configured.
+  const normalized = outPath.replace(/\\/g, "/");
+  const marker = "/jobs/";
+  const idx = normalized.lastIndexOf(marker);
+  if (idx >= 0) {
+    const rest = normalized.slice(idx + marker.length);
+    const slash = rest.indexOf("/");
+    if (slash > 0) {
+      const jobId = rest.slice(0, slash);
+      const relativePath = rest.slice(slash + 1);
+      // Only sync if this path is under our jobDir layout.
+      if (outPath.startsWith(jobDir(jobId))) {
+        await syncLocalFileToBlob(jobId, relativePath).catch(() => undefined);
+      }
+    }
+  }
 }
 
 async function writeImageBlob(outPath: string, blob: Blob) {

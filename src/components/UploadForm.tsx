@@ -3,6 +3,29 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { FIXTURES, type FixtureMeta } from "@/lib/fixtures";
+import { readJsonResponse } from "@/lib/api";
+
+type JobCreateResponse = {
+  id?: string;
+  status?: string;
+  error?: string;
+};
+
+async function waitForExtraction(jobId: string) {
+  const started = Date.now();
+  while (Date.now() - started < 180_000) {
+    const res = await fetch(`/api/jobs/${jobId}`, { cache: "no-store" });
+    const job = await readJsonResponse<{ status?: string; error?: string }>(res);
+    if (!res.ok) throw new Error(job.error || "Failed to poll job status");
+    if (job.status === "awaiting_approval" || job.status === "ready") return;
+    if (job.status === "failed") {
+      throw new Error(job.error || "Extraction failed");
+    }
+    // uploaded / extracting are in-progress
+    await new Promise((r) => setTimeout(r, 1500));
+  }
+  throw new Error("Extraction timed out. Open the job from Recent jobs and retry.");
+}
 
 export function UploadForm() {
   const router = useRouter();
@@ -13,10 +36,12 @@ export function UploadForm() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState(false);
+  const [statusNote, setStatusNote] = useState<string | null>(null);
 
   async function submit(fixtureId?: string) {
     setBusy(true);
     setError(null);
+    setStatusNote("Creating job…");
     try {
       let res: Response;
       const cultures = [
@@ -47,13 +72,21 @@ export function UploadForm() {
         if (file) form.set("file", file);
         res = await fetch("/api/jobs", { method: "POST", body: form });
       }
-      const data = await res.json();
+      const data = await readJsonResponse<JobCreateResponse>(res);
       if (!res.ok) throw new Error(data.error || "Upload failed");
+      if (!data.id) throw new Error("Server did not return a job id");
+
+      if (data.status === "extracting") {
+        setStatusNote("Extracting scenes and continuity…");
+        await waitForExtraction(data.id);
+      }
+
       router.push(`/jobs/${data.id}/extract`);
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     } finally {
       setBusy(false);
+      setStatusNote(null);
     }
   }
 
@@ -179,6 +212,11 @@ export function UploadForm() {
           {error}
         </p>
       ) : null}
+      {statusNote ? (
+        <p className="animate-pulse-soft text-sm" style={{ color: "var(--accent-strong)" }}>
+          {statusNote}
+        </p>
+      ) : null}
 
       <div className="flex flex-wrap items-center gap-3 pt-1">
         <button
@@ -188,7 +226,7 @@ export function UploadForm() {
           className="btn-primary disabled:opacity-50"
         >
           {busy
-            ? "Extracting…"
+            ? statusNote || "Working…"
             : selectedFixture
               ? "Run selected sample"
               : "Upload & extract"}

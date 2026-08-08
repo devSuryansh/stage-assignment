@@ -1,8 +1,7 @@
-import { promises as fs } from "fs";
 import path from "path";
 import JSZip from "jszip";
 import type { Job } from "../schema";
-import { jobDir } from "../store";
+import { listJobFiles, readJobBinary, readJobText } from "../fs-store";
 
 export function buildContinuityReport(job: Job): string {
   const extraction = job.extraction;
@@ -63,7 +62,6 @@ export function buildBreakdown(job: Job) {
 
 export async function exportJobZip(job: Job): Promise<Buffer> {
   const zip = new JSZip();
-  const dir = jobDir(job.id);
   const report = buildContinuityReport(job);
   const breakdown = buildBreakdown(job);
 
@@ -80,23 +78,14 @@ export async function exportJobZip(job: Job): Promise<Buffer> {
     JSON.stringify(job.extraction?.costumes || [], null, 2),
   );
 
-  try {
-    const usage = await fs.readFile(job.usageLogPath, "utf8");
-    zip.file("ai-usage-log.jsonl", usage);
-  } catch {
-    zip.file("ai-usage-log.jsonl", "");
-  }
+  const usage = await readJobText(job.id, "ai-usage-log.jsonl");
+  zip.file("ai-usage-log.jsonl", usage || "");
 
   const addFolder = async (folderRel: string) => {
-    const abs = path.join(dir, folderRel);
-    try {
-      const files = await fs.readdir(abs);
-      for (const file of files) {
-        const buf = await fs.readFile(path.join(abs, file));
-        zip.file(path.join(folderRel, file), buf);
-      }
-    } catch {
-      // optional
+    const files = await listJobFiles(job.id, folderRel);
+    for (const file of files) {
+      const buf = await readJobBinary(job.id, path.join(folderRel, file));
+      if (buf) zip.file(path.join(folderRel, file), buf);
     }
   };
 

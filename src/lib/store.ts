@@ -1,34 +1,25 @@
-import { promises as fs } from "fs";
 import path from "path";
 import { randomUUID } from "crypto";
 import type { CultureSelection, Job, JobStatus } from "./schema";
 import { BANGRU_DEFAULT } from "./schema";
+import {
+  assertDurableStorage,
+  jobDir,
+  listJobIds,
+  readJobText,
+  writeJobText,
+} from "./fs-store";
 
-function dataRoot() {
-  // Vercel filesystem is read-only except /tmp; default there when DATA_DIR unset.
-  const base =
-    process.env.DATA_DIR ||
-    (process.env.VERCEL || process.env.VERCEL_ENV ? "/tmp/data" : "data");
-  return path.isAbsolute(base)
-    ? path.join(base, "jobs")
-    : path.join(process.cwd(), base, "jobs");
-}
-
-export function jobDir(id: string) {
-  return path.join(dataRoot(), id);
-}
+export { jobDir } from "./fs-store";
 
 export function jobJsonPath(id: string) {
   return path.join(jobDir(id), "job.json");
 }
 
 export async function ensureJobDirs(id: string) {
-  const dir = jobDir(id);
-  await fs.mkdir(path.join(dir, "images", "characters"), { recursive: true });
-  await fs.mkdir(path.join(dir, "images", "costumes"), { recursive: true });
-  await fs.mkdir(path.join(dir, "images", "scenes"), { recursive: true });
-  await fs.mkdir(path.join(dir, "exports"), { recursive: true });
-  return dir;
+  // Local dirs are created lazily by write helpers; Blob needs no mkdir.
+  void id;
+  return jobDir(id);
 }
 
 export async function createJob(input: {
@@ -36,10 +27,10 @@ export async function createJob(input: {
   sourceFilename?: string;
   cultures?: CultureSelection[];
 }): Promise<Job> {
+  assertDurableStorage();
   const id = randomUUID();
   const cultures = input.cultures?.length ? input.cultures : [BANGRU_DEFAULT];
   const now = new Date().toISOString();
-  await ensureJobDirs(id);
   const job: Job = {
     id,
     createdAt: now,
@@ -52,19 +43,19 @@ export async function createJob(input: {
     usageLogPath: path.join(jobDir(id), "ai-usage-log.jsonl"),
   };
   await saveJob(job);
-  await fs.writeFile(path.join(jobDir(id), "original.txt"), input.originalText, "utf8");
+  await writeJobText(id, "original.txt", input.originalText);
   return job;
 }
 
 export async function saveJob(job: Job): Promise<void> {
   job.updatedAt = new Date().toISOString();
-  await ensureJobDirs(job.id);
-  await fs.writeFile(jobJsonPath(job.id), JSON.stringify(job, null, 2), "utf8");
+  await writeJobText(job.id, "job.json", JSON.stringify(job, null, 2));
 }
 
 export async function loadJob(id: string): Promise<Job | null> {
+  const raw = await readJobText(id, "job.json");
+  if (!raw) return null;
   try {
-    const raw = await fs.readFile(jobJsonPath(id), "utf8");
     return JSON.parse(raw) as Job;
   } catch {
     return null;
@@ -85,9 +76,7 @@ export async function updateJobStatus(
 
 export async function listJobs(): Promise<Job[]> {
   try {
-    const root = dataRoot();
-    await fs.mkdir(root, { recursive: true });
-    const entries = await fs.readdir(root);
+    const entries = await listJobIds();
     const jobs: Job[] = [];
     for (const entry of entries) {
       const job = await loadJob(entry);
@@ -101,4 +90,11 @@ export async function listJobs(): Promise<Job[]> {
 
 export function absoluteAssetPath(jobId: string, relativePath: string) {
   return path.join(jobDir(jobId), relativePath);
+}
+
+/** Relative path inside a job dir from an absolute local path. */
+export function relativeJobPath(jobId: string, absPath: string): string {
+  const base = jobDir(jobId);
+  const rel = path.relative(base, absPath);
+  return rel.replace(/\\/g, "/");
 }

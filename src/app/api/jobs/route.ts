@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { promises as fs } from "fs";
 import path from "path";
+import { after } from "next/server";
 import { createJob, listJobs } from "@/lib/store";
 import { ingestFile, normalizeScreenplayText } from "@/lib/ingest";
 import { CULTURE_PRESETS } from "@/lib/culture/bangru";
@@ -10,30 +11,46 @@ import { runExtraction } from "@/lib/pipeline/run";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const maxDuration = 300;
+
+/** Static path map so Vercel file tracing always bundles fixtures. */
+const FIXTURE_FILES: Record<string, string> = {
+  "jail-5scenes": "sample-5scenes.txt",
+  "sabzi-mandi": "sample-sabzi-mandi.txt",
+  "bus-adda": "sample-bus-adda.txt",
+  thana: "sample-thana.txt",
+};
 
 async function loadFixtureText(fixtureId: string) {
   const meta = getFixture(fixtureId) || getFixture("jail-5scenes");
   if (!meta) throw new Error(`Unknown fixture: ${fixtureId}`);
-  const text = await fs.readFile(
-    path.join(process.cwd(), "fixtures", meta.filename),
-    "utf8",
-  );
+  const filename = FIXTURE_FILES[meta.id] || meta.filename;
+  // Literal directory + known filenames keep fixtures in the serverless bundle.
+  const abs = path.join(process.cwd(), "fixtures", filename);
+  const text = await fs.readFile(abs, "utf8");
   return { text, filename: meta.filename, meta };
 }
 
 export async function GET() {
-  const jobs = await listJobs();
-  return NextResponse.json({
-    jobs: jobs.map((j) => ({
-      id: j.id,
-      status: j.status,
-      createdAt: j.createdAt,
-      culture: j.primaryCulture,
-      sourceFilename: j.sourceFilename,
-    })),
-    presets: CULTURE_PRESETS,
-    fixtures: FIXTURES,
-  });
+  try {
+    const jobs = await listJobs();
+    return NextResponse.json({
+      jobs: jobs.map((j) => ({
+        id: j.id,
+        status: j.status,
+        createdAt: j.createdAt,
+        culture: j.primaryCulture,
+        sourceFilename: j.sourceFilename,
+      })),
+      presets: CULTURE_PRESETS,
+      fixtures: FIXTURES,
+    });
+  } catch (err) {
+    return NextResponse.json(
+      { error: err instanceof Error ? err.message : String(err) },
+      { status: 500 },
+    );
+  }
 }
 
 export async function POST(req: NextRequest) {
@@ -111,10 +128,16 @@ export async function POST(req: NextRequest) {
       cultures,
     });
 
-    // Kick extraction (await for MVP reliability)
-    await runExtraction(job.id);
+    // Return quickly on Vercel; finish extraction in the same invocation via after().
+    after(async () => {
+      try {
+        await runExtraction(job.id);
+      } catch (err) {
+        console.error("background extraction failed", job.id, err);
+      }
+    });
 
-    return NextResponse.json({ id: job.id, status: "awaiting_approval" });
+    return NextResponse.json({ id: job.id, status: "extracting" });
   } catch (err) {
     return NextResponse.json(
       { error: err instanceof Error ? err.message : String(err) },

@@ -24,7 +24,7 @@ The brief's multi-culture bonus is out of scope for this submission. The UI chec
 
 ## Serverless storage
 
-Job JSON and images live on the local filesystem under `DATA_DIR` (default `data`, auto `/tmp/data` on Vercel). Ephemeral on serverless — the bundled `samples/bangru/` pack is the durable showcase when quotas or cold disks wipe runtime jobs.
+Locally, jobs live under `DATA_DIR` (default `data`). On Vercel, `/tmp` is **per instance**, so the app requires **Vercel Blob** (`BLOB_READ_WRITE_TOKEN`) for job JSON, usage logs, and images. Without Blob, a job can be created and then 404 on `/jobs/[id]/extract` when a different instance handles the page. The bundled `samples/bangru/` pack remains the repo showcase.
 
 ## Offline mode
 

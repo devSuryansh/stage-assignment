@@ -4,10 +4,11 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import type { Job } from "@/lib/schema";
+import { readJsonResponse } from "@/lib/api";
 
 async function fetchJob(jobId: string): Promise<Job> {
   const res = await fetch(`/api/jobs/${jobId}`, { cache: "no-store" });
-  const data = await res.json();
+  const data = await readJsonResponse<Job & { error?: string }>(res);
   if (!res.ok) throw new Error(data.error || "Failed to load job");
   return data as Job;
 }
@@ -57,7 +58,7 @@ export function ApproveClient({ jobId, job }: { jobId: string; job: Job }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ extraction, approved: true }),
       });
-      const data = await res.json();
+      const data = await readJsonResponse<{ status?: string; error?: string }>(res);
       if (!res.ok) throw new Error(data.error || "Approval failed");
       if (data.status === "ready") {
         router.push(`/jobs/${jobId}/gallery`);

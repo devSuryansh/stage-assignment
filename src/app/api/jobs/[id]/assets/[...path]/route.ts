@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
-import { promises as fs } from "fs";
 import path from "path";
-import { loadJob, jobDir } from "@/lib/store";
+import { loadJob } from "@/lib/store";
+import { readJobBinary } from "@/lib/fs-store";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -15,16 +15,16 @@ export async function GET(
   if (!job) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   const rel = parts.join("/");
-  const imagesRoot = path.resolve(jobDir(id), "images");
-  const abs = path.resolve(jobDir(id), rel);
-
-  if (!abs.startsWith(imagesRoot + path.sep) && abs !== imagesRoot) {
+  if (!rel.startsWith("images/") || rel.includes("..")) {
     return NextResponse.json({ error: "Invalid path" }, { status: 400 });
   }
 
   try {
-    const buf = await fs.readFile(abs);
-    const ext = path.extname(abs).toLowerCase();
+    const buf = await readJobBinary(id, rel);
+    if (!buf) {
+      return NextResponse.json({ error: "Asset not found" }, { status: 404 });
+    }
+    const ext = path.extname(rel).toLowerCase();
     const type =
       ext === ".png"
         ? "image/png"
@@ -33,7 +33,7 @@ export async function GET(
           : ext === ".webp"
             ? "image/webp"
             : "application/octet-stream";
-    return new NextResponse(buf, {
+    return new NextResponse(new Uint8Array(buf), {
       headers: { "Content-Type": type, "Cache-Control": "no-store" },
     });
   } catch {
