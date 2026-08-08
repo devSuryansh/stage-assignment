@@ -128,10 +128,7 @@ export function ApproveClient({ jobId, job }: { jobId: string; job: Job }) {
         </p>
       ) : null}
       {error ? (
-        <p
-          className="rounded px-3 py-2 text-sm"
-          style={{ border: "1px solid var(--danger)", color: "var(--danger)" }}
-        >
+        <p className="error-banner" role="alert">
           {error}
         </p>
       ) : null}
@@ -146,8 +143,7 @@ export function ApproveClient({ jobId, job }: { jobId: string; job: Job }) {
         type="button"
         disabled={busy || polling || errors.length > 0 || job.status === "ready"}
         onClick={approve}
-        className="rounded px-4 py-2 text-sm font-medium disabled:opacity-50"
-        style={{ background: "var(--accent)", color: "#1a1208" }}
+        className="btn-primary disabled:opacity-50"
       >
         {busy || polling
           ? "Generating…"

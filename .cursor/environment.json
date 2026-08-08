@@ -5,7 +5,7 @@
     {
       "name": "dev",
       "command": "npm run dev",
-      "description": "Next.js dev server on http://localhost:3000. The app runs offline via heuristic extraction/adaptation and Pollinations image fallback; set FreeLLMAPI env vars to use the LLM path."
+      "description": "Next.js on http://localhost:3000. Set GROQ_API_KEY for free chat; images use free Pollinations flux by default."
     }
   ],
   "ports": [

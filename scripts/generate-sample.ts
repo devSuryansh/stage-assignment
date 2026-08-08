@@ -1,6 +1,6 @@
 /**
  * End-to-end sample regeneration against fixtures/sample-5scenes.txt.
- * Requires FREELLMAPI_* (or GOOGLE_API_KEY fallback) and POLLINATIONS_API_KEY.
+ * Requires GROQ_API_KEY (free). Images use free Pollinations flux by default.
  */
 import "dotenv/config";
 import { promises as fs } from "fs";
@@ -107,10 +107,10 @@ Generated from fixtures/sample-5scenes.txt via the live two-pass extraction + sc
 
 - Job id: ${job.id}
 - Job dir: ${jobDir(job.id)}
-- Chat model: ${process.env.FREELLMAPI_CHAT_MODEL || "gemini-3.5-flash"}
-- Image model: ${process.env.POLLINATIONS_IMAGE_MODEL || "nanobanana"}
+- Chat model: ${process.env.GROQ_CHAT_MODEL || "llama-3.3-70b-versatile"}
+- Image model: pollinations-flux (free) unless HF_IMAGES=1
 
-Re-run: \`npm run sample\` with keys loaded.
+Re-run: \`npm run sample\` with GROQ_API_KEY loaded.
 `,
   );
 

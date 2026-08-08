@@ -5,7 +5,10 @@ import type { CultureSelection, Job, JobStatus } from "./schema";
 import { BANGRU_DEFAULT } from "./schema";
 
 function dataRoot() {
-  const base = process.env.DATA_DIR || "data";
+  // Vercel filesystem is read-only except /tmp; default there when DATA_DIR unset.
+  const base =
+    process.env.DATA_DIR ||
+    (process.env.VERCEL || process.env.VERCEL_ENV ? "/tmp/data" : "data");
   return path.isAbsolute(base)
     ? path.join(base, "jobs")
     : path.join(process.cwd(), base, "jobs");

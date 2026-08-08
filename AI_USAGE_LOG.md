@@ -6,18 +6,18 @@ Runtime calls append JSON lines to each job's `ai-usage-log.jsonl` and to `sampl
 
 | purpose | model (typical) | notes |
 |---|---|---|
-| `extract_pass1_skeleton` | `gemini-2.5-flash` | global characters + scene skeleton |
+| `extract_pass1_skeleton` | `llama-3.3-70b-versatile` (Groq) | global characters + scene skeleton |
 | `extract_pass2_scene_N` | same | per-scene production + continuity |
 | `adapt_scene_N` | same | Bangru scene rewrite with prior-scene context |
-| `image_character_*` | `nanobanana` or `pollinations-flux-fallback` | text-only character bible |
-| `image_costume_*` | same (+ edits ref when Pollen available) | conditioned on character PNG when keyed path works |
-| `image_scene_*` | same (+ edits ref when Pollen available) | conditioned on character PNG when keyed path works |
+| `image_character_*` | `pollinations-flux` | free text-to-image |
+| `image_costume_*` | `pollinations-flux` (or HF Kontext if `HF_IMAGES=1`) | identity via prompt/seed, or ref edit |
+| `image_scene_*` | same | same |
 
-Failures are logged with `ok: false` and an `error` string. Flux fallbacks appear as `pollinations-flux-fallback` (often with a 402 insufficient-balance note).
+Failures are logged with `ok: false` and an `error` string.
 
 ## Sample pack
 
-Committed `samples/bangru/ai-usage-log.jsonl` is a **23-line** live run (`gemini-2.5-flash` + flux fallback). Regenerate after topping up Pollen with:
+Regenerate with a valid `HF_TOKEN`:
 
 ```bash
 npm run sample

@@ -4,11 +4,22 @@ import path from "path";
 import { createJob, listJobs } from "@/lib/store";
 import { ingestFile, normalizeScreenplayText } from "@/lib/ingest";
 import { CULTURE_PRESETS } from "@/lib/culture/bangru";
+import { FIXTURES, getFixture } from "@/lib/fixtures";
 import type { CultureSelection, SettingType } from "@/lib/schema";
 import { runExtraction } from "@/lib/pipeline/run";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+
+async function loadFixtureText(fixtureId: string) {
+  const meta = getFixture(fixtureId) || getFixture("jail-5scenes");
+  if (!meta) throw new Error(`Unknown fixture: ${fixtureId}`);
+  const text = await fs.readFile(
+    path.join(process.cwd(), "fixtures", meta.filename),
+    "utf8",
+  );
+  return { text, filename: meta.filename, meta };
+}
 
 export async function GET() {
   const jobs = await listJobs();
@@ -21,6 +32,7 @@ export async function GET() {
       sourceFilename: j.sourceFilename,
     })),
     presets: CULTURE_PRESETS,
+    fixtures: FIXTURES,
   });
 }
 
@@ -35,6 +47,7 @@ export async function POST(req: NextRequest) {
       const form = await req.formData();
       const pasted = String(form.get("text") || "");
       const file = form.get("file");
+      const fixtureId = String(form.get("fixtureId") || "");
       const dialect = String(form.get("dialect") || "Bangru");
       const region = String(form.get("region") || "Haryana");
       const setting = String(form.get("setting") || "rural") as SettingType;
@@ -48,7 +61,11 @@ export async function POST(req: NextRequest) {
         },
       ];
 
-      if (file && typeof file !== "string") {
+      if (fixtureId) {
+        const loaded = await loadFixtureText(fixtureId);
+        text = loaded.text;
+        filename = loaded.filename;
+      } else if (file && typeof file !== "string") {
         const buf = Buffer.from(await file.arrayBuffer());
         filename = file.name;
         text = await ingestFile(buf, file.name);
@@ -61,14 +78,16 @@ export async function POST(req: NextRequest) {
       text = body.text || "";
       filename = body.filename;
       cultures = body.cultures;
-      if (!cultures?.length && body.useFixture) {
-        const fixture = await fs.readFile(
-          path.join(process.cwd(), "fixtures", "sample-5scenes.txt"),
-          "utf8",
+
+      // Fixture must load even when cultures are also provided (UI always sends both).
+      if (body.useFixture || body.fixtureId) {
+        const loaded = await loadFixtureText(
+          String(body.fixtureId || "jail-5scenes"),
         );
-        text = fixture;
-        filename = "sample-5scenes.txt";
+        text = loaded.text;
+        filename = loaded.filename;
       }
+
       if (!cultures?.length) {
         cultures = [
           {

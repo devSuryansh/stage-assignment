@@ -1,1 +1,3 @@
-Images are produced at Approve time via FreeLLMAPI (or Pollinations fallback). Run the UI generate step to populate this folder.
+Images are produced at Approve time via Hugging Face Inference Providers
+(text-to-image for character bibles; image-to-image for costume/scene identity lock).
+Run the UI generate step or `npm run sample` to populate this folder.

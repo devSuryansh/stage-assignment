@@ -2,32 +2,85 @@ import OpenAI from "openai";
 import { appendUsage } from "./usage";
 import { generateImageFile } from "./image";
 
-function freeLlmClient() {
-  const baseURL = process.env.FREELLMAPI_BASE_URL || "http://localhost:3001/v1";
-  const apiKey = process.env.FREELLMAPI_API_KEY || "freellmapi-missing";
-  return new OpenAI({ baseURL, apiKey });
+/**
+ * Free-first chat routing:
+ * 1) Groq (free tier, OpenAI-compatible) — default
+ * 2) Hugging Face Inference Providers — optional if HF_TOKEN has credits
+ *
+ * HF free monthly credits are tiny (~$0.10) and deplete quickly on image+chat.
+ */
+
+type ChatBackend = "groq" | "huggingface";
+
+function groqKey(): string | undefined {
+  return process.env.GROQ_API_KEY || undefined;
 }
 
-/** Direct Gemini OpenAI-compatible fallback when FreeLLMAPI is unreachable. */
-function geminiClient() {
-  const apiKey = process.env.GOOGLE_API_KEY;
-  if (!apiKey) return null;
+function hfToken(): string | undefined {
+  return (
+    process.env.HF_TOKEN ||
+    process.env.HUGGINGFACE_API_KEY ||
+    process.env.HUGGING_FACE_HUB_TOKEN ||
+    undefined
+  );
+}
+
+function preferredBackend(): ChatBackend {
+  const forced = (process.env.CHAT_PROVIDER || "").toLowerCase();
+  if (forced === "groq" || forced === "huggingface" || forced === "hf") {
+    return forced === "hf" ? "huggingface" : (forced as ChatBackend);
+  }
+  if (groqKey()) return "groq";
+  if (hfToken()) return "huggingface";
+  throw new Error(
+    "No free chat key configured. Set GROQ_API_KEY (free at https://console.groq.com/keys). Optional: HF_TOKEN if you still have Inference Providers credits.",
+  );
+}
+
+function chatClient(backend: ChatBackend) {
+  if (backend === "groq") {
+    const apiKey = groqKey();
+    if (!apiKey) throw new Error("GROQ_API_KEY missing");
+    return new OpenAI({
+      baseURL: "https://api.groq.com/openai/v1",
+      apiKey,
+    });
+  }
+  const apiKey = hfToken();
+  if (!apiKey) throw new Error("HF_TOKEN missing");
   return new OpenAI({
-    baseURL: "https://generativelanguage.googleapis.com/v1beta/openai/",
+    baseURL: process.env.HF_CHAT_BASE_URL || "https://router.huggingface.co/v1",
     apiKey,
   });
 }
 
-export function chatModel() {
-  return process.env.FREELLMAPI_CHAT_MODEL || "gemini-3.5-flash";
+export function chatModel(backend?: ChatBackend) {
+  let b: ChatBackend = backend || "groq";
+  if (!backend) {
+    try {
+      b = preferredBackend();
+    } catch {
+      b = groqKey() ? "groq" : "huggingface";
+    }
+  }
+  if (b === "groq") {
+    return process.env.GROQ_CHAT_MODEL || "llama-3.3-70b-versatile";
+  }
+  return (
+    process.env.HF_CHAT_MODEL || "meta-llama/Llama-3.3-70B-Instruct:fastest"
+  );
 }
 
 export function imageModel() {
-  return process.env.FREELLMAPI_IMAGE_MODEL || "nanobanana";
+  return process.env.HF_IMAGE_MODEL || "black-forest-labs/FLUX.1-schnell";
 }
 
 function sleep(ms: number) {
   return new Promise((r) => setTimeout(r, ms));
+}
+
+function isCreditError(msg: string) {
+  return /depleted|credits|payment|402|insufficient/i.test(msg);
 }
 
 function extractJson(text: string): unknown {
@@ -47,48 +100,75 @@ function extractJson(text: string): unknown {
   }
 }
 
+function backendsToTry(): ChatBackend[] {
+  const primary = preferredBackend();
+  const ordered: ChatBackend[] = [primary];
+  if (primary === "groq" && hfToken()) ordered.push("huggingface");
+  if (primary === "huggingface" && groqKey()) ordered.push("groq");
+  return ordered;
+}
+
 async function chatCompletion(opts: {
   system: string;
   user: string;
   temperature?: number;
   json?: boolean;
 }): Promise<{ content: string; model: string; usage?: OpenAI.Completions.CompletionUsage }> {
-  const model = chatModel();
-  const messages: OpenAI.Chat.ChatCompletionMessageParam[] = [
-    { role: "system", content: opts.system },
-    { role: "user", content: opts.user },
-  ];
-  const body: OpenAI.Chat.ChatCompletionCreateParamsNonStreaming = {
-    model,
-    temperature: opts.temperature ?? 0.3,
-    messages,
-  };
-  if (opts.json) {
-    body.response_format = { type: "json_object" };
+  let lastError: unknown;
+
+  for (const backend of backendsToTry()) {
+    const model = chatModel(backend);
+    const messages: OpenAI.Chat.ChatCompletionMessageParam[] = [
+      { role: "system", content: opts.system },
+      { role: "user", content: opts.user },
+    ];
+    const body: OpenAI.Chat.ChatCompletionCreateParamsNonStreaming = {
+      model,
+      temperature: opts.temperature ?? 0.3,
+      messages,
+    };
+    if (opts.json) {
+      body.response_format = { type: "json_object" };
+    }
+
+    try {
+      const resp = await chatClient(backend).chat.completions.create(body);
+      return {
+        content: resp.choices[0]?.message?.content ?? "",
+        model: resp.model || `${backend}:${model}`,
+        usage: resp.usage,
+      };
+    } catch (err) {
+      lastError = err;
+      const msg = err instanceof Error ? err.message : String(err);
+
+      if (opts.json && !isCreditError(msg)) {
+        try {
+          const plain = { ...body };
+          delete plain.response_format;
+          const resp = await chatClient(backend).chat.completions.create(plain);
+          return {
+            content: resp.choices[0]?.message?.content ?? "",
+            model: resp.model || `${backend}:${model}`,
+            usage: resp.usage,
+          };
+        } catch (retryErr) {
+          lastError = retryErr;
+        }
+      }
+
+      // Try next backend (e.g. HF credits depleted → Groq).
+      continue;
+    }
   }
 
-  try {
-    const resp = await freeLlmClient().chat.completions.create(body);
-    return {
-      content: resp.choices[0]?.message?.content ?? "",
-      model: resp.model || model,
-      usage: resp.usage,
-    };
-  } catch (primaryErr) {
-    const gemini = geminiClient();
-    if (!gemini) throw primaryErr;
-    const fallbackModel =
-      process.env.GOOGLE_CHAT_MODEL || "gemini-2.5-flash";
-    const resp = await gemini.chat.completions.create({
-      ...body,
-      model: fallbackModel,
-    });
-    return {
-      content: resp.choices[0]?.message?.content ?? "",
-      model: resp.model || fallbackModel,
-      usage: resp.usage,
-    };
+  const msg = lastError instanceof Error ? lastError.message : String(lastError);
+  if (isCreditError(msg)) {
+    throw new Error(
+      `${msg} Hugging Face monthly free credits are exhausted. Set GROQ_API_KEY for free chat (https://console.groq.com/keys).`,
+    );
   }
+  throw lastError instanceof Error ? lastError : new Error(msg);
 }
 
 export async function chatText(opts: {

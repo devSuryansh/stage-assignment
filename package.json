@@ -12,6 +12,7 @@
     "sample": "npx tsx scripts/generate-sample.ts"
   },
   "dependencies": {
+    "@huggingface/inference": "^4.13.25",
     "@tanstack/react-query": "^5.101.4",
     "archiver": "^8.0.0",
     "jszip": "^3.10.1",

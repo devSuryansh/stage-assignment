@@ -2,34 +2,40 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { FIXTURES, type FixtureMeta } from "@/lib/fixtures";
 
 export function UploadForm() {
   const router = useRouter();
   const [text, setText] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [setting, setSetting] = useState("rural");
+  const [selectedFixture, setSelectedFixture] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [dragOver, setDragOver] = useState(false);
 
-  async function submit(useFixture = false) {
+  async function submit(fixtureId?: string) {
     setBusy(true);
     setError(null);
     try {
       let res: Response;
-      if (useFixture) {
+      const cultures = [
+        {
+          dialect: "Bangru",
+          region: "Haryana",
+          setting,
+          label: `Bangru Haryanvi (Haryana, ${setting})`,
+        },
+      ];
+
+      if (fixtureId) {
         res = await fetch("/api/jobs", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             useFixture: true,
-            cultures: [
-              {
-                dialect: "Bangru",
-                region: "Haryana",
-                setting,
-                label: `Bangru Haryanvi (Haryana, ${setting})`,
-              },
-            ],
+            fixtureId,
+            cultures,
           }),
         });
       } else {
@@ -51,30 +57,27 @@ export function UploadForm() {
     }
   }
 
-  const fieldStyle = {
-    background: "var(--surface-raised)",
-    border: "1px solid var(--border-subtle)",
-    color: "var(--text-primary)",
-  } as const;
+  function pickFixture(f: FixtureMeta) {
+    setSelectedFixture(f.id);
+    setFile(null);
+  }
+
+  function onFile(next: File | null) {
+    setFile(next);
+    setSelectedFixture(null);
+  }
 
   return (
-    <div className="space-y-6">
-      <div className="grid gap-4 md:grid-cols-2">
+    <div className="space-y-8">
+      <div className="grid gap-4 sm:grid-cols-2">
         <label className="block space-y-2">
-          <span className="text-sm font-medium" style={{ color: "var(--text-muted)" }}>
-            Culture / dialect
-          </span>
-          <div className="rounded px-3 py-2" style={fieldStyle}>
-            Bangru Haryanvi · Haryana
-          </div>
+          <span className="field-label">Culture / dialect</span>
+          <div className="field-box">Bangru Haryanvi · Haryana</div>
         </label>
         <label className="block space-y-2">
-          <span className="text-sm font-medium" style={{ color: "var(--text-muted)" }}>
-            Setting
-          </span>
+          <span className="field-label">Setting</span>
           <select
-            className="w-full rounded px-3 py-2"
-            style={fieldStyle}
+            className="field-box w-full appearance-none"
             value={setting}
             onChange={(e) => setSetting(e.target.value)}
           >
@@ -85,61 +88,118 @@ export function UploadForm() {
         </label>
       </div>
 
+      <div className="space-y-3">
+        <div className="flex items-end justify-between gap-3">
+          <span className="field-label">Start from a sample</span>
+          <span className="text-xs" style={{ color: "var(--text-faint)" }}>
+            {FIXTURES.length} bundled screenplays
+          </span>
+        </div>
+        <div className="grid gap-3 sm:grid-cols-2">
+          {FIXTURES.map((f) => {
+            const active = selectedFixture === f.id;
+            return (
+              <button
+                key={f.id}
+                type="button"
+                disabled={busy}
+                onClick={() => pickFixture(f)}
+                className="sample-tile text-left disabled:opacity-50"
+                data-active={active ? "true" : "false"}
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <p className="font-medium" style={{ color: "var(--text-primary)" }}>
+                    {f.title}
+                  </p>
+                  <span className="sample-chip">{f.scenes} sc</span>
+                </div>
+                <p className="mt-2 text-sm" style={{ color: "var(--text-muted)" }}>
+                  {f.blurb}
+                </p>
+                <p className="mt-3 flex flex-wrap gap-1.5">
+                  {f.tags.map((tag) => (
+                    <span key={tag} className="sample-tag">
+                      {tag}
+                    </span>
+                  ))}
+                </p>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
       <label className="block space-y-2">
-        <span className="text-sm font-medium" style={{ color: "var(--text-muted)" }}>
-          Paste screenplay
-        </span>
+        <span className="field-label">Or paste your screenplay</span>
         <textarea
-          className="min-h-48 w-full rounded p-3 font-mono text-sm"
-          style={fieldStyle}
+          className="field-box min-h-44 w-full font-mono text-sm leading-relaxed"
           value={text}
-          onChange={(e) => setText(e.target.value)}
-          placeholder="Paste TXT screenplay here..."
+          onChange={(e) => {
+            setText(e.target.value);
+            if (e.target.value.trim()) setSelectedFixture(null);
+          }}
+          placeholder="INT. SOMEWHERE - DAY&#10;&#10;Action lines…&#10;&#10;                    CHARACTER&#10;          Dialogue…"
         />
       </label>
 
-      <label className="block space-y-2">
-        <span className="text-sm font-medium" style={{ color: "var(--text-muted)" }}>
-          Or upload TXT / DOCX / PDF
-        </span>
-        <input
-          type="file"
-          accept=".txt,.md,.docx,.pdf"
-          onChange={(e) => setFile(e.target.files?.[0] || null)}
-        />
-      </label>
-
-      {error ? (
-        <p
-          className="rounded px-3 py-2 text-sm"
-          style={{
-            border: "1px solid var(--danger)",
-            color: "var(--danger)",
-            background: "rgba(248,113,113,0.08)",
+      <div className="space-y-2">
+        <span className="field-label">Or drop a file</span>
+        <label
+          className="file-drop"
+          data-active={dragOver ? "true" : "false"}
+          onDragOver={(e) => {
+            e.preventDefault();
+            setDragOver(true);
+          }}
+          onDragLeave={() => setDragOver(false)}
+          onDrop={(e) => {
+            e.preventDefault();
+            setDragOver(false);
+            const dropped = e.dataTransfer.files?.[0];
+            if (dropped) onFile(dropped);
           }}
         >
+          <input
+            type="file"
+            accept=".txt,.md,.docx,.pdf"
+            className="sr-only"
+            onChange={(e) => onFile(e.target.files?.[0] || null)}
+          />
+          <span className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>
+            {file ? file.name : "TXT, DOCX, or PDF"}
+          </span>
+          <span className="mt-1 block text-xs" style={{ color: "var(--text-faint)" }}>
+            {file ? "Click to replace" : "Click to browse or drag a file here"}
+          </span>
+        </label>
+      </div>
+
+      {error ? (
+        <p className="error-banner" role="alert">
           {error}
         </p>
       ) : null}
 
-      <div className="flex flex-wrap gap-3">
+      <div className="flex flex-wrap items-center gap-3 pt-1">
         <button
           type="button"
-          disabled={busy}
-          onClick={() => submit(false)}
-          className="rounded px-4 py-2 text-sm font-medium disabled:opacity-50"
-          style={{ background: "var(--accent)", color: "#1a1208" }}
+          disabled={busy || (!selectedFixture && !text.trim() && !file)}
+          onClick={() => submit(selectedFixture || undefined)}
+          className="btn-primary disabled:opacity-50"
         >
-          {busy ? "Extracting…" : "Upload & extract"}
+          {busy
+            ? "Extracting…"
+            : selectedFixture
+              ? "Run selected sample"
+              : "Upload & extract"}
         </button>
         <button
           type="button"
           disabled={busy}
-          onClick={() => submit(true)}
-          className="rounded px-4 py-2 text-sm disabled:opacity-50"
-          style={fieldStyle}
+          onClick={() => submit("jail-5scenes")}
+          className="btn-ghost disabled:opacity-50"
         >
-          Use 5-scene jail fixture (Bangru)
+          Quick start: jail fixture
         </button>
       </div>
     </div>

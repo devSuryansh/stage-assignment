@@ -24,31 +24,41 @@ upload → format parser → LLM pass 1 (characters/scenes)
                        → export ZIP
 ```
 
-- **Chat:** FreeLLMAPI (`gemini-3.5-flash`), with optional direct Gemini OpenAI-compatible fallback.
-- **Images:** Pollinations `nanobanana` (keyed) with `/v1/images/edits` reference conditioning; keyless `flux` + browser User-Agent as last resort.
+- **Chat (free):** Groq OpenAI-compatible API (`llama-3.3-70b-versatile`). HF Inference Providers is optional and burns a tiny monthly credit pool (~$0.10).
+- **Images (free):** Pollinations `flux` (no key). Optional HF Kontext edits when `HF_IMAGES=1` and you still have credits.
 - **Offline fallback:** generic screenplay parser only — no hardcoded fixture answers.
 
 ## Setup
 
 ```bash
 cp .env.example .env
-# FREELLMAPI_API_KEY, FREELLMAPI_CHAT_MODEL=gemini-3.5-flash
-# POLLINATIONS_API_KEY
-# optional: GOOGLE_API_KEY for chat fallback
-# on Vercel: DATA_DIR=/tmp/data
+# Free chat key (no credit card):
+# https://console.groq.com/keys
+# GROQ_API_KEY=gsk_...
 
 npm install
 npm run dev
 ```
 
-### FreeLLMAPI (recommended chat router)
+| Variable | Default | Role |
+|---|---|---|
+| `GROQ_API_KEY` | — | Free chat for extract + adapt |
+| `GROQ_CHAT_MODEL` | `llama-3.3-70b-versatile` | Chat model |
+| `HF_TOKEN` | — | Optional; only if you want HF routing/images |
+| `HF_IMAGES` | off | Set `1` to prefer HF image models |
+| `DATA_DIR` | `data` locally; `/tmp/data` on Vercel | Job JSON + images |
+
+## Deploy on Vercel
+
+1. Push the repo and import it in [Vercel](https://vercel.com/new).
+2. Set `GROQ_API_KEY` (Production + Preview). Optional: `HF_TOKEN` / `HF_IMAGES`.
+3. Deploy. API routes under `/api/jobs/**` run with `maxDuration: 300`.
+4. Bundled `samples/bangru/` is the durable showcase when serverless storage is wiped.
 
 ```bash
-curl -fsSL https://freellmapi.co/install.sh | bash
-# open http://localhost:3001 — add provider keys — copy unified API key
+npx vercel env add GROQ_API_KEY
+npx vercel --prod
 ```
-
-Point `FREELLMAPI_BASE_URL` at `http://localhost:3001/v1`.
 
 ## Scripts
 
@@ -61,15 +71,15 @@ Point `FREELLMAPI_BASE_URL` at `http://localhost:3001/v1`.
 ## Design decisions
 
 - **Two extraction passes** for output depth, not input truncation — per-scene prompts yield richer production detail.
-- **Identity lock is a reference image**, not a prompt adjective. Character bible first; costumes and keyframes condition on that PNG.
+- **Identity lock is a reference image**, not a prompt adjective. Character bible first; costumes and keyframes condition on that PNG via HF image-to-image.
 - **Approval gate is server-enforced** (`status === awaiting_approval` + `approved: true`).
 - **Prop continuity uses token overlap** after normalizing parentheticals/stopwords, so paraphrases do not spam false warnings.
 - **Multi-culture checkbox removed** rather than shipping a half-feature (`job.cultures` was written and never read). See LIMITATIONS.md.
 
 ## Demo talking points
 
-- How face consistency works: reference-image conditioning via Pollinations edits.
-- Broken JSON: `response_format: json_object` + zod + repair pass.
+- How face consistency works: character bible → HF `imageToImage` (Kontext) with that PNG as input.
+- Broken JSON: `response_format: json_object` (when the provider supports it) + zod + repair pass.
 - Alias merge: name/alias cross-match into one canonical id.
 - Weakest parts (own them): dialect authenticity unverified by a native speaker; continuity is heuristic, not semantic.
 

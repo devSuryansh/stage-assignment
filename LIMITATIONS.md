@@ -12,17 +12,11 @@ Bangru adaptation is produced by an LLM with an explicit culture-lock card (`स
 
 ## Image identity lock
 
-Reference conditioning (character bible → Pollinations `/v1/images/edits` on `nanobanana`) is the intended identity lock. It is not LoRA / IP-Adapter grade.
+Default images use free Pollinations `flux` with a stable seed and identity text in the prompt. True reference-image conditioning (character bible PNG → edit model) needs Hugging Face Kontext and Inference Providers credits (`HF_IMAGES=1`). That path is not LoRA / IP-Adapter grade. On the free Pollinations path, faces can drift across the pack.
 
-**Current sample pack:** the Pollinations account had **0.0000 Pollen**, so every keyed `nanobanana` call returned HTTP 402 and the pipeline fell back to keyless `flux`. That fallback has **no** reference conditioning — faces will drift across the pack. Top up Pollen (or enable Google image billing) and re-run `npm run sample` to restore the lock.
+## Provider cost reality
 
-## Google image free tier
-
-Gemini image models returned `GenerateRequestsPerDayPerProjectPerModel-FreeTier` with zero allowance at build time. Images therefore route to Pollinations, not Google.
-
-## FreeLLMAPI image path
-
-FreeLLMAPI's `/v1/images/generations` has no Google adapter and drops image parts on the Gemini emulation round-trip. Chat goes through FreeLLMAPI; images call Pollinations directly.
+Hugging Face Inference Providers includes only a small monthly free credit (~$0.10 for free accounts). Chat + image runs burn it quickly (the approve error you may have seen). This app defaults to **Groq** (free chat tier) and **Pollinations flux** (free images). Set `GROQ_API_KEY` from https://console.groq.com/keys. Keep `HF_TOKEN` only if you still have credits or buy more.
 
 ## Multi-culture
 
@@ -30,8 +24,8 @@ The brief's multi-culture bonus is out of scope for this submission. The UI chec
 
 ## Serverless storage
 
-Job JSON and images live on the local filesystem under `DATA_DIR` (default `data`, use `/tmp/data` on Vercel). Ephemeral on serverless — the bundled `samples/bangru/` pack is the durable showcase when quotas or cold disks wipe runtime jobs.
+Job JSON and images live on the local filesystem under `DATA_DIR` (default `data`, auto `/tmp/data` on Vercel). Ephemeral on serverless — the bundled `samples/bangru/` pack is the durable showcase when quotas or cold disks wipe runtime jobs.
 
 ## Offline mode
 
-If chat is unreachable, extraction falls back to the **generic format parser** (sluglines + cues only). It will not invent production detail or Bangru dialogue. Adaptation and image generation require live keys.
+If chat is unreachable, extraction falls back to the **generic format parser** (sluglines + cues only). It will not invent production detail or Bangru dialogue. Adaptation and image generation require a live `HF_TOKEN`.

@@ -8,85 +8,57 @@ export default async function HomePage() {
   const jobs = await listJobs();
 
   return (
-    <main className="mx-auto max-w-4xl px-4 py-12">
-      <p
-        className="animate-fade-up text-xs uppercase tracking-[0.22em]"
-        style={{ color: "var(--text-faint)" }}
-      >
-        STAGE · AI-native production pack
-      </p>
-      <h1
-        className="animate-fade-up-delay mt-3 text-4xl leading-tight md:text-5xl"
-        style={{
-          fontFamily: "var(--font-display), sans-serif",
-          color: "var(--text-primary)",
-        }}
-      >
-        Cultural Adaptation Studio
-      </h1>
-      <p className="mt-4 max-w-2xl" style={{ color: "var(--text-muted)" }}>
-        Adapt a screenplay into Bangru Haryanvi, lock continuity, then generate a
-        character / costume / scene visual pack — only after you approve.
-      </p>
+    <main className="relative overflow-hidden">
+      <div className="hero-glow" aria-hidden />
+      <div className="mx-auto max-w-5xl px-4 pb-16 pt-14 md:pt-20">
+        <p className="animate-fade-up eyebrow">STAGE · production pack module</p>
+        <h1 className="animate-fade-up-delay brand-title mt-4">
+          Cultural
+          <br />
+          Adaptation Studio
+        </h1>
+        <p className="animate-fade-up-delay-2 mt-5 max-w-xl text-base leading-relaxed md:text-lg" style={{ color: "var(--text-muted)" }}>
+          Bangru Haryanvi dialogue, continuity-safe breakdowns, and a visual pack
+          that only generates after you approve.
+        </p>
 
-      <section
-        className="mt-10 p-6"
-        style={{
-          background: "var(--surface-panel)",
-          border: "1px solid var(--border-subtle)",
-        }}
-      >
-        <h2
-          className="text-lg font-semibold"
-          style={{ fontFamily: "var(--font-display), sans-serif" }}
-        >
-          Upload & select culture
-        </h2>
-        <div className="mt-4">
+        <section className="panel-shell animate-fade-up-delay-2 mt-12 p-5 md:p-8">
+          <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
+            <div>
+              <h2 className="section-title">New adaptation</h2>
+              <p className="mt-1 text-sm" style={{ color: "var(--text-faint)" }}>
+                Pick a sample, paste text, or upload a file.
+              </p>
+            </div>
+          </div>
           <UploadForm />
-        </div>
-      </section>
-
-      {jobs.length ? (
-        <section className="mt-10">
-          <h2
-            className="text-lg font-semibold"
-            style={{ fontFamily: "var(--font-display), sans-serif" }}
-          >
-            Recent jobs
-          </h2>
-          <ul
-            className="mt-3 divide-y"
-            style={{
-              background: "var(--surface-panel)",
-              border: "1px solid var(--border-subtle)",
-              borderColor: "var(--border-subtle)",
-            }}
-          >
-            {jobs.slice(0, 8).map((job) => (
-              <li
-                key={job.id}
-                className="flex items-center justify-between px-4 py-3 text-sm"
-                style={{ borderColor: "var(--border-subtle)" }}
-              >
-                <div>
-                  <p className="font-medium">{job.primaryCulture.label}</p>
-                  <p style={{ color: "var(--text-faint)" }}>
-                    {job.sourceFilename || "pasted"} · {job.status}
-                  </p>
-                </div>
-                <Link
-                  className="underline"
-                  style={{ color: "var(--accent-strong)" }}
-                  href={`/jobs/${job.id}/extract`}
-                >
-                  Open
-                </Link>
-              </li>
-            ))}
-          </ul>
         </section>
-      ) : null}
+
+        {jobs.length ? (
+          <section className="mt-12">
+            <h2 className="section-title">Recent jobs</h2>
+            <ul className="panel-shell mt-4 divide-y" style={{ borderColor: "var(--border-subtle)" }}>
+              {jobs.slice(0, 8).map((job) => (
+                <li
+                  key={job.id}
+                  className="flex items-center justify-between gap-4 px-4 py-3.5 text-sm"
+                  style={{ borderColor: "var(--border-subtle)" }}
+                >
+                  <div className="min-w-0">
+                    <p className="truncate font-medium">{job.primaryCulture.label}</p>
+                    <p className="truncate" style={{ color: "var(--text-faint)" }}>
+                      {job.sourceFilename || "pasted"} · {job.status}
+                    </p>
+                  </div>
+                  <Link className="shrink-0 link-accent" href={`/jobs/${job.id}/extract`}>
+                    Open
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </section>
+        ) : null}
+      </div>
     </main>
   );
 }

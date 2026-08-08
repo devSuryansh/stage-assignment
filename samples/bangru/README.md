@@ -1,14 +1,14 @@
 # Bangru sample pack
 
-Live regeneration from `fixtures/sample-5scenes.txt` via:
+Live regeneration from `fixtures/sample-5scenes.txt`:
 
-- Chat: `gemini-2.5-flash` (Google OpenAI-compatible endpoint)
-- Images: Pollinations keyless `flux` fallback (account Pollen balance was `0.0000`, so keyed `nanobanana` reference conditioning returned HTTP 402)
+- Chat: Groq `llama-3.3-70b-versatile` (free tier)
+- Images: Pollinations `flux` (free; optional HF Kontext when `HF_IMAGES=1`)
 
 ## Contents
 
 - `adapted_screenplay.txt` — scene-by-scene Bangru adaptation
-- `breakdown.json` / `continuity_report.md` — extraction + continuity (0 issues on this run)
+- `breakdown.json` / `continuity_report.md` — extraction + continuity
 - `images/` — character bible, costumes, scene keyframes
 - `ai-usage-log.jsonl` — multi-line live usage log
 - `production-pack.zip` — export bundle
@@ -16,8 +16,6 @@ Live regeneration from `fixtures/sample-5scenes.txt` via:
 ## Re-run
 
 ```bash
-# Prefer nanobanana once Pollen is topped up at enter.pollinations.ai
+# Requires GROQ_API_KEY from https://console.groq.com/keys
 npm run sample
 ```
-
-With Pollen available, costumes/scenes will condition on the character reference PNG instead of falling back to flux.
